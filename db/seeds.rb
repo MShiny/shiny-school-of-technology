@@ -42,6 +42,7 @@ course_definitions = [
     provider: "Coursera",
     status: "in_progress",
     level: "E1",
+    purpose: "Complete Python E1 foundation",
     progress_percentage: 45
   },
   {
@@ -50,6 +51,7 @@ course_definitions = [
     provider: "Coursera (Andrew Ng)",
     status: "in_progress",
     level: "E1",
+    purpose: "Machine Learning E1",
     progress_percentage: 30
   },
   {
@@ -58,6 +60,7 @@ course_definitions = [
     provider: "Coursera",
     status: "in_progress",
     level: "E2",
+    purpose: "Generative AI E2",
     progress_percentage: 65
   },
   {
@@ -66,6 +69,7 @@ course_definitions = [
     provider: "Self-study",
     status: "planned",
     level: "E1",
+    purpose: "Sharpen problem solving for technical interviews",
     progress_percentage: nil
   },
   {
@@ -74,18 +78,36 @@ course_definitions = [
     provider: "Coursera",
     status: "planned",
     level: "E2",
+    purpose: "Prepare for Deep Learning",
     progress_percentage: nil
   }
 ]
 
 course_definitions.each do |attrs|
   subject = subjects.fetch(attrs[:subject])
-  Course.find_or_create_by!(subject: subject, title: attrs[:title]) do |course|
-    course.provider = attrs[:provider]
-    course.status = attrs[:status]
-    course.level = attrs[:level]
-    course.progress_percentage = attrs[:progress_percentage]
+  course = Course.find_or_create_by!(subject: subject, title: attrs[:title]) do |c|
+    c.provider = attrs[:provider]
+    c.status = attrs[:status]
+    c.level = attrs[:level]
+    c.purpose = attrs[:purpose]
+    c.progress_percentage = attrs[:progress_percentage]
   end
+
+  # Backfill purpose on courses seeded before this field existed, without
+  # touching a purpose the user may have already entered themselves.
+  course.update!(purpose: attrs[:purpose]) if course.purpose.blank?
+end
+
+puts "Seeding personal projects..."
+lms_rag_project = PersonalProject.find_or_create_by!(name: "LMS RAG Project") do |project|
+  project.status = "in_progress"
+  project.goal = "Build a working RAG prototype that creates lesson plans from uploaded study material."
+  project.description = "A personal learning-management side project combining retrieval-augmented generation with course content."
+end
+
+[ "Python", "Generative AI", "AI Agents" ].each do |subject_name|
+  subject = subjects.fetch(subject_name)
+  PersonalProjectSubject.find_or_create_by!(personal_project: lms_rag_project, subject: subject)
 end
 
 puts "Seeding daily goals..."

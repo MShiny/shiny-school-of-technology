@@ -1,0 +1,41 @@
+<% content_for :title, "Personal Projects" %>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h3 mb-0">🚀 Personal Projects</h1>
+  <%= link_to "New Project", new_personal_project_path, class: "btn btn-primary" %>
+</div>
+
+<% if @personal_projects.any? %>
+  <div class="row g-3">
+    <% @personal_projects.each do |project| %>
+      <div class="col-md-6 col-lg-4">
+        <div class="card h-100">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start">
+              <h2 class="card-title h5"><%= link_to project.name, project, class: "text-decoration-none" %></h2>
+              <%= status_badge(project.status) %>
+            </div>
+            <% if project.goal.present? %>
+              <p class="card-text small text-muted"><%= truncate(project.goal, length: 100) %></p>
+            <% end %>
+            <% if project.target_date.present? %>
+              <p class="card-text small">🎯 Target: <%= project.target_date.strftime("%b %-d, %Y") %></p>
+            <% end %>
+            <p class="card-text small">
+              <% project.subjects.each do |subject| %>
+                <span class="badge text-bg-light border me-1"><%= subject.name %></span>
+              <% end %>
+            </p>
+          </div>
+          <div class="card-footer bg-transparent border-0 d-flex gap-2">
+            <%= link_to "View", project, class: "btn btn-sm btn-outline-primary" %>
+            <%= link_to "Edit", edit_personal_project_path(project), class: "btn btn-sm btn-outline-secondary" %>
+            <%= button_to "Delete", project, method: :delete, class: "btn btn-sm btn-outline-danger", form: { data: { turbo_confirm: "Delete this project?" } } %>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  </div>
+<% else %>
+  <p class="text-muted">No personal projects yet. Create one to start tracking a self-directed build.</p>
+<% end %>

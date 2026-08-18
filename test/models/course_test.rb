@@ -43,4 +43,25 @@ class CourseTest < ActiveSupport::TestCase
     course = Course.create!(subject: @subject, title: "Programming for Everybody")
     assert_equal "planned", course.status
   end
+
+  test "purpose is optional and persists free text" do
+    course = Course.create!(subject: @subject, title: "Programming for Everybody")
+    assert_nil course.purpose
+
+    course.update!(purpose: "Complete Python E1 foundation")
+
+    assert_equal "Complete Python E1 foundation", course.reload.purpose
+  end
+
+  test "level and purpose are independent fields" do
+    course = Course.create!(
+      subject: @subject,
+      title: "Programming for Everybody",
+      level: "E1",
+      purpose: "Complete Python E1 foundation"
+    )
+
+    assert_equal "E1", course.level
+    assert_equal "Complete Python E1 foundation", course.purpose
+  end
 end

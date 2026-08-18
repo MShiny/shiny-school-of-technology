@@ -94,6 +94,9 @@
                     <% if course.provider.present? %> · <%= course.provider %><% end %>
                     <% if course.level.present? %> · Level <%= course.level %><% end %>
                   </div>
+                  <% if course.purpose.present? %>
+                    <div class="small text-muted"><em>🎯 <%= course.purpose %></em></div>
+                  <% end %>
                 </div>
                 <% if course.progress_percentage.present? %>
                   <span class="badge text-bg-info"><%= course.progress_percentage %>%</span>
@@ -128,5 +131,43 @@
     </div>
   <% else %>
     <p class="text-muted small">No goal history yet.</p>
+  <% end %>
+</div>
+
+<div class="mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-2">
+    <h2 class="h5 mb-0">🚀 Personal Projects</h2>
+    <%= link_to "View all", personal_projects_path, class: "small" %>
+  </div>
+  <% if @personal_projects.any? %>
+    <div class="row g-2">
+      <% @personal_projects.each do |project| %>
+        <div class="col-md-6">
+          <div class="card h-100">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start">
+                <%= link_to project.name, project, class: "text-decoration-none fw-semibold" %>
+                <%= status_badge(project.status) %>
+              </div>
+              <% if project.goal.present? %>
+                <p class="small text-muted mb-1"><%= truncate(project.goal, length: 90) %></p>
+              <% end %>
+              <% if project.target_date.present? %>
+                <p class="small text-muted mb-1">🎯 Target: <%= project.target_date.strftime("%b %-d, %Y") %></p>
+              <% end %>
+              <% if project.subjects.any? %>
+                <p class="mb-0">
+                  <% project.subjects.each do |subject| %>
+                    <span class="badge text-bg-light border me-1"><%= subject.name %></span>
+                  <% end %>
+                </p>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <p class="text-muted small">No active or planned personal projects right now.</p>
   <% end %>
 </div>

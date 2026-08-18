@@ -28,6 +28,11 @@
     <dd class="col-sm-9"><%= @course.level %></dd>
   <% end %>
 
+  <% if @course.purpose.present? %>
+    <dt class="col-sm-3">Purpose</dt>
+    <dd class="col-sm-9"><%= @course.purpose %></dd>
+  <% end %>
+
   <% if @course.progress_percentage.present? %>
     <dt class="col-sm-3">Progress</dt>
     <dd class="col-sm-9">

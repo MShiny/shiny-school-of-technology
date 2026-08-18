@@ -40,4 +40,14 @@ class SubjectsControllerTest < ActionDispatch::IntegrationTest
       delete subject_url(@subject)
     end
   end
+
+  test "show displays related personal projects" do
+    project = PersonalProject.create!(name: "LMS RAG Project", status: "in_progress")
+    project.subjects << @subject
+
+    get subject_url(@subject)
+
+    assert_response :success
+    assert_match project.name, response.body
+  end
 end

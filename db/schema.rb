@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_08_18_155401) do
+ActiveRecord::Schema[8.0].define(version: 2026_08_18_162103) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -31,6 +31,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_18_155401) do
     t.text "notes"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.text "purpose"
     t.index ["status"], name: "index_courses_on_status"
     t.index ["subject_id"], name: "index_courses_on_subject_id"
   end
@@ -64,6 +65,28 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_18_155401) do
     t.index ["status"], name: "index_degrees_on_status"
   end
 
+  create_table "personal_project_subjects", force: :cascade do |t|
+    t.bigint "personal_project_id", null: false
+    t.bigint "subject_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["personal_project_id", "subject_id"], name: "index_pp_subjects_on_project_and_subject", unique: true
+    t.index ["personal_project_id"], name: "index_personal_project_subjects_on_personal_project_id"
+    t.index ["subject_id"], name: "index_personal_project_subjects_on_subject_id"
+  end
+
+  create_table "personal_projects", force: :cascade do |t|
+    t.string "name", null: false
+    t.text "description"
+    t.string "status", default: "idea", null: false
+    t.text "goal"
+    t.date "target_date"
+    t.text "notes"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["status"], name: "index_personal_projects_on_status"
+  end
+
   create_table "subjects", force: :cascade do |t|
     t.string "name", null: false
     t.text "description"
@@ -77,4 +100,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_18_155401) do
   add_foreign_key "courses", "subjects"
   add_foreign_key "degree_subjects", "degrees"
   add_foreign_key "degree_subjects", "subjects"
+  add_foreign_key "personal_project_subjects", "personal_projects"
+  add_foreign_key "personal_project_subjects", "subjects"
 end

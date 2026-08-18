@@ -9,6 +9,7 @@ class SubjectsController < ApplicationController
     @courses = @subject.courses.ordered
     @in_progress_courses = @subject.courses.in_progress.ordered
     @degrees = @subject.degrees.ordered
+    @personal_projects = @subject.personal_projects.ordered
   end
 
   def new

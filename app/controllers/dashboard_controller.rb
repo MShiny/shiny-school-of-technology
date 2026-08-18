@@ -6,5 +6,9 @@ class DashboardController < ApplicationController
     @recent_goals = DailyGoal.recent.limit(7)
     @monthly_stats = DailyGoal.monthly_stats
     @current_streak = DailyGoal.current_streak
+
+    # in_progress projects first, then planned
+    @personal_projects = PersonalProject.in_progress.ordered.includes(:subjects).to_a +
+                          PersonalProject.planned.ordered.includes(:subjects).to_a
   end
 end

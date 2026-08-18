@@ -9,6 +9,7 @@ module ApplicationHelper
     "pending" => "warning",
     "planned" => "secondary",
     "not_started" => "secondary",
+    "idea" => "secondary",
     "paused" => "secondary",
     "dropped" => "danger",
     "not_met" => "danger"

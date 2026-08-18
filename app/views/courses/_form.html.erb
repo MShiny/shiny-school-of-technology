@@ -47,6 +47,11 @@
   </div>
 
   <div>
+    <%= form.label :purpose, "Purpose", class: "form-label" %>
+    <%= form.text_area :purpose, class: "form-control", rows: 2, placeholder: "What are you doing this course for? e.g. Complete Python E1 foundation" %>
+  </div>
+
+  <div>
     <%= form.label :notes, class: "form-label" %>
     <%= form.text_area :notes, class: "form-control", rows: 3 %>
   </div>

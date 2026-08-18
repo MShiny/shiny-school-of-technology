@@ -14,6 +14,7 @@ Rails.application.routes.draw do
   resources :degrees
   resources :subjects
   resources :courses
+  resources :personal_projects
 
   resources :daily_goals, only: [ :index, :show, :edit, :update ] do
     member do

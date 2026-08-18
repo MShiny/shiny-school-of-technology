@@ -9,6 +9,9 @@
       <% if course.provider.present? %> · <%= course.provider %><% end %>
       <% if course.level.present? %> · Level <%= course.level %><% end %>
     </p>
+    <% if course.purpose.present? %>
+      <p class="card-text small text-muted mb-1"><em>🎯 <%= course.purpose %></em></p>
+    <% end %>
     <% if course.progress_percentage.present? %>
       <div class="progress" style="height: 6px;">
         <div class="progress-bar" role="progressbar" style="width: <%= course.progress_percentage %>%;" aria-valuenow="<%= course.progress_percentage %>" aria-valuemin="0" aria-valuemax="100"></div>

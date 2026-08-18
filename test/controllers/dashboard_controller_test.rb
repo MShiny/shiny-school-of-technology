@@ -30,11 +30,36 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     degree = Degree.create!(name: "AI/ML Degree", status: "active")
     subject = Subject.create!(name: "Python")
     degree.subjects << subject
-    course = subject.courses.create!(title: "Programming for Everybody", status: "in_progress")
+    course = subject.courses.create!(title: "Programming for Everybody", status: "in_progress", purpose: "Complete Python E1 foundation")
 
     get root_url
 
     assert_match degree.name, response.body
     assert_match course.title, response.body
+    assert_match course.purpose, response.body
+  end
+
+  test "dashboard shows in_progress and planned personal projects, prioritizing in_progress" do
+    in_progress_project = PersonalProject.create!(name: "LMS RAG Project", status: "in_progress", goal: "Ship a RAG prototype.")
+    planned_project = PersonalProject.create!(name: "Someday Project", status: "planned")
+    PersonalProject.create!(name: "Old Idea", status: "idea")
+    PersonalProject.create!(name: "Finished Project", status: "completed")
+
+    get root_url
+
+    assert_match in_progress_project.name, response.body
+    assert_match planned_project.name, response.body
+    assert_no_match(/Old Idea/, response.body)
+    assert_no_match(/Finished Project/, response.body)
+
+    in_progress_index = response.body.index(in_progress_project.name)
+    planned_index = response.body.index(planned_project.name)
+    assert_operator in_progress_index, :<, planned_index
+  end
+
+  test "dashboard shows an empty state when there are no active or planned personal projects" do
+    get root_url
+
+    assert_match "No active or planned personal projects", response.body
   end
 end
