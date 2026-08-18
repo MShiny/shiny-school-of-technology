@@ -36,6 +36,17 @@ end
 
 puts "Seeding courses..."
 course_definitions = [
+  # Python has a full roadmap: a completed course, the current one, and a planned one.
+  {
+    subject: "Python",
+    title: "Python Basics",
+    provider: "freeCodeCamp",
+    status: "completed",
+    level: "E0",
+    purpose: "Warm up before the formal Python course",
+    progress_percentage: 100,
+    roadmap_position: 1
+  },
   {
     subject: "Python",
     title: "Programming for Everybody",
@@ -43,7 +54,18 @@ course_definitions = [
     status: "in_progress",
     level: "E1",
     purpose: "Complete Python E1 foundation",
-    progress_percentage: 45
+    progress_percentage: 45,
+    roadmap_position: 2
+  },
+  {
+    subject: "Python",
+    title: "Advanced Python",
+    provider: "Real Python",
+    status: "planned",
+    level: "E2",
+    purpose: "Deepen Python skills for AI tooling",
+    progress_percentage: nil,
+    roadmap_position: 3
   },
   {
     subject: "Machine Learning",
@@ -52,7 +74,8 @@ course_definitions = [
     status: "in_progress",
     level: "E1",
     purpose: "Machine Learning E1",
-    progress_percentage: 30
+    progress_percentage: 30,
+    roadmap_position: nil
   },
   {
     subject: "Generative AI",
@@ -61,7 +84,8 @@ course_definitions = [
     status: "in_progress",
     level: "E2",
     purpose: "Generative AI E2",
-    progress_percentage: 65
+    progress_percentage: 65,
+    roadmap_position: nil
   },
   {
     subject: "DSA",
@@ -70,7 +94,8 @@ course_definitions = [
     status: "planned",
     level: "E1",
     purpose: "Sharpen problem solving for technical interviews",
-    progress_percentage: nil
+    progress_percentage: nil,
+    roadmap_position: nil
   },
   {
     subject: "Deep Learning",
@@ -79,7 +104,8 @@ course_definitions = [
     status: "planned",
     level: "E2",
     purpose: "Prepare for Deep Learning",
-    progress_percentage: nil
+    progress_percentage: nil,
+    roadmap_position: nil
   }
 ]
 
@@ -91,11 +117,13 @@ course_definitions.each do |attrs|
     c.level = attrs[:level]
     c.purpose = attrs[:purpose]
     c.progress_percentage = attrs[:progress_percentage]
+    c.roadmap_position = attrs[:roadmap_position]
   end
 
-  # Backfill purpose on courses seeded before this field existed, without
-  # touching a purpose the user may have already entered themselves.
+  # Backfill fields added after this course was first seeded, without
+  # touching values the user may have already entered themselves.
   course.update!(purpose: attrs[:purpose]) if course.purpose.blank?
+  course.update!(roadmap_position: attrs[:roadmap_position]) if course.roadmap_position.blank? && attrs[:roadmap_position].present?
 end
 
 puts "Seeding personal projects..."

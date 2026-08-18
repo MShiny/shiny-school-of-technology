@@ -24,32 +24,84 @@
   </div>
 <% end %>
 
-<% if @in_progress_courses.any? %>
-  <h2 class="h5 mt-4">🔥 Currently In Progress</h2>
-  <div class="row g-2 mb-3">
-    <% @in_progress_courses.each do |course| %>
-      <div class="col-md-6">
-        <%= render "courses/course_card", course: course %>
-      </div>
-    <% end %>
-  </div>
-<% end %>
-
 <div class="d-flex justify-content-between align-items-center mt-4">
-  <h2 class="h5 mb-0">All Courses</h2>
+  <h2 class="h5 mb-0">🔥 Current Courses</h2>
   <%= link_to "Add Course", new_course_path(subject_id: @subject.id), class: "btn btn-sm btn-primary" %>
 </div>
-
-<% if @courses.any? %>
-  <div class="row g-2 mt-2">
-    <% @courses.each do |course| %>
+<% if @current_courses.any? %>
+  <div class="row g-2 mt-1 mb-3">
+    <% @current_courses.each do |course| %>
       <div class="col-md-6">
-        <%= render "courses/course_card", course: course %>
+        <%= render "courses/course_card", course: course, show_progress: true, show_roadmap_position: true %>
       </div>
     <% end %>
   </div>
 <% else %>
-  <p class="text-muted">No courses added for this subject yet.</p>
+  <p class="text-muted small mt-1">Nothing in progress for this subject right now.</p>
+<% end %>
+
+<h2 class="h5 mt-4">🗺️ Next Up</h2>
+<% if @next_up_courses.any? %>
+  <ol class="list-group list-group-numbered mb-3">
+    <% @next_up_courses.each do |course| %>
+      <li class="list-group-item d-flex justify-content-between align-items-start">
+        <div class="ms-2 me-auto">
+          <div class="fw-semibold"><%= link_to course.title, course, class: "text-decoration-none" %></div>
+          <div class="small text-muted">
+            <% if course.provider.present? %><%= course.provider %><% end %>
+            <% if course.level.present? %> · Level <%= course.level %><% end %>
+          </div>
+          <% if course.purpose.present? %>
+            <div class="small text-muted"><em>🎯 <%= course.purpose %></em></div>
+          <% end %>
+        </div>
+        <% if course.roadmap_position.present? %>
+          <span class="badge text-bg-secondary rounded-pill">Step <%= course.roadmap_position %></span>
+        <% end %>
+      </li>
+    <% end %>
+  </ol>
+<% else %>
+  <p class="text-muted small">No upcoming courses queued yet.</p>
+<% end %>
+
+<h2 class="h5 mt-4">✅ Completed Courses</h2>
+<% if @completed_courses.any? %>
+  <div class="list-group mb-3">
+    <% @completed_courses.each do |course| %>
+      <%= link_to course_path(course), class: "list-group-item list-group-item-action d-flex justify-content-between align-items-center" do %>
+        <span>
+          <strong><%= course.title %></strong>
+          <span class="text-muted small">
+            <% if course.provider.present? %> · <%= course.provider %><% end %>
+            <% if course.level.present? %> · Level <%= course.level %><% end %>
+          </span>
+          <% if course.purpose.present? %>
+            <br><span class="text-muted small"><em>🎯 <%= course.purpose %></em></span>
+          <% end %>
+        </span>
+        <%= status_badge(course.status) %>
+      <% end %>
+    <% end %>
+  </div>
+<% else %>
+  <p class="text-muted small">No completed courses for this subject yet.</p>
+<% end %>
+
+<% if @other_courses.any? %>
+  <h2 class="h6 mt-4 text-muted">Other Courses</h2>
+  <div class="list-group mb-3">
+    <% @other_courses.each do |course| %>
+      <%= link_to course_path(course), class: "list-group-item list-group-item-action d-flex justify-content-between align-items-center small" do %>
+        <span>
+          <%= course.title %>
+          <% if course.provider.present? %><span class="text-muted"> · <%= course.provider %></span><% end %>
+          <% if course.level.present? %><span class="text-muted"> · Level <%= course.level %></span><% end %>
+        </span>
+        <%= status_badge(course.status) %>
+      <% end %>
+    <% end %>
+  </div>
 <% end %>
 
 <% if @personal_projects.any? %>

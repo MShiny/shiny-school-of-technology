@@ -64,4 +64,38 @@ class CourseTest < ActiveSupport::TestCase
     assert_equal "E1", course.level
     assert_equal "Complete Python E1 foundation", course.purpose
   end
+
+  test "roadmap_position is optional" do
+    course = Course.new(subject: @subject, title: "Advanced Python")
+    assert course.valid?
+    assert_nil course.roadmap_position
+  end
+
+  test "roadmap_position must be a positive integer when present" do
+    course = Course.new(subject: @subject, title: "Advanced Python", roadmap_position: 0)
+    assert_not course.valid?
+
+    course.roadmap_position = -1
+    assert_not course.valid?
+
+    course.roadmap_position = 1.5
+    assert_not course.valid?
+
+    course.roadmap_position = 1
+    assert course.valid?
+
+    course.roadmap_position = 5
+    assert course.valid?
+  end
+
+  test "roadmap_ordered sorts positioned courses first, then unpositioned, then by title" do
+    unpositioned_b = Course.create!(subject: @subject, title: "Zzz Unpositioned")
+    positioned_two = Course.create!(subject: @subject, title: "Second", roadmap_position: 2)
+    unpositioned_a = Course.create!(subject: @subject, title: "Aaa Unpositioned")
+    positioned_one = Course.create!(subject: @subject, title: "First", roadmap_position: 1)
+
+    ordered = @subject.courses.roadmap_ordered.to_a
+
+    assert_equal [ positioned_one, positioned_two, unpositioned_a, unpositioned_b ], ordered
+  end
 end

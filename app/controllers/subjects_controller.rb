@@ -6,8 +6,10 @@ class SubjectsController < ApplicationController
   end
 
   def show
-    @courses = @subject.courses.ordered
-    @in_progress_courses = @subject.courses.in_progress.ordered
+    @current_courses = @subject.courses.in_progress.roadmap_ordered
+    @next_up_courses = @subject.courses.planned.roadmap_ordered
+    @completed_courses = @subject.courses.completed.roadmap_ordered
+    @other_courses = @subject.courses.where(status: %w[ paused dropped ]).roadmap_ordered
     @degrees = @subject.degrees.ordered
     @personal_projects = @subject.personal_projects.ordered
   end

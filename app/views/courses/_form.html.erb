@@ -47,6 +47,12 @@
   </div>
 
   <div>
+    <%= form.label :roadmap_position, "Roadmap position", class: "form-label" %>
+    <%= form.number_field :roadmap_position, class: "form-control", min: 1, style: "max-width: 10rem;" %>
+    <div class="form-text">Optional. Used to manually order this course within its subject's roadmap.</div>
+  </div>
+
+  <div>
     <%= form.label :purpose, "Purpose", class: "form-label" %>
     <%= form.text_area :purpose, class: "form-control", rows: 2, placeholder: "What are you doing this course for? e.g. Complete Python E1 foundation" %>
   </div>

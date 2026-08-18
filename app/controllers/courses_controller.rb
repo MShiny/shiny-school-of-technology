@@ -2,7 +2,10 @@ class CoursesController < ApplicationController
   before_action :set_course, only: %i[ show edit update destroy ]
 
   def index
+    @status_filter = params[:status] if Course.statuses.key?(params[:status])
+
     @courses = Course.ordered.includes(:subject)
+    @courses = @courses.where(status: @status_filter) if @status_filter.present?
   end
 
   def show
@@ -46,6 +49,6 @@ class CoursesController < ApplicationController
   end
 
   def course_params
-    params.require(:course).permit(:subject_id, :title, :provider, :url, :status, :level, :purpose, :progress_percentage, :notes)
+    params.require(:course).permit(:subject_id, :title, :provider, :url, :status, :level, :purpose, :progress_percentage, :roadmap_position, :notes)
   end
 end

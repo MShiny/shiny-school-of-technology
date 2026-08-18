@@ -38,4 +38,48 @@ class CoursesControllerTest < ActionDispatch::IntegrationTest
       delete course_url(@course)
     end
   end
+
+  test "index without a status filter shows all courses" do
+    planned = @subject.courses.create!(title: "Advanced Python", status: "planned")
+
+    get courses_url
+
+    assert_response :success
+    assert_match @course.title, response.body
+    assert_match planned.title, response.body
+  end
+
+  test "index with a valid status filter only shows matching courses" do
+    planned = @subject.courses.create!(title: "Advanced Python", status: "planned")
+
+    get courses_url(status: "planned")
+
+    assert_response :success
+    assert_match planned.title, response.body
+    assert_no_match(/#{Regexp.escape(@course.title)}/, response.body)
+  end
+
+  test "index ignores an invalid status filter and shows all courses" do
+    get courses_url(status: "not_a_real_status")
+
+    assert_response :success
+    assert_match @course.title, response.body
+  end
+
+  test "create with valid roadmap_position succeeds" do
+    assert_difference("Course.count", 1) do
+      post courses_url, params: {
+        course: { subject_id: @subject.id, title: "Advanced Python", status: "planned", roadmap_position: 3 }
+      }
+    end
+  end
+
+  test "create with a zero or negative roadmap_position fails" do
+    assert_no_difference("Course.count") do
+      post courses_url, params: {
+        course: { subject_id: @subject.id, title: "Advanced Python", status: "planned", roadmap_position: 0 }
+      }
+    end
+    assert_response :unprocessable_entity
+  end
 end
