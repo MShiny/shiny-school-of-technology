@@ -1,0 +1,58 @@
+<%= form_with model: course, class: "vstack gap-3" do |form| %>
+  <% if course.errors.any? %>
+    <div class="alert alert-danger">
+      <strong><%= pluralize(course.errors.count, "error") %> prevented this course from being saved:</strong>
+      <ul class="mb-0">
+        <% course.errors.each do |error| %>
+          <li><%= error.full_message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div>
+    <%= form.label :subject_id, "Subject", class: "form-label" %>
+    <%= form.collection_select :subject_id, Subject.ordered, :id, :name, { prompt: "Select a subject" }, class: "form-select" %>
+  </div>
+
+  <div>
+    <%= form.label :title, class: "form-label" %>
+    <%= form.text_field :title, class: "form-control", placeholder: "e.g. Programming for Everybody" %>
+  </div>
+
+  <div class="row">
+    <div class="col-md-6">
+      <%= form.label :provider, class: "form-label" %>
+      <%= form.text_field :provider, class: "form-control", placeholder: "e.g. Coursera" %>
+    </div>
+    <div class="col-md-6">
+      <%= form.label :url, class: "form-label" %>
+      <%= form.url_field :url, class: "form-control", placeholder: "https://..." %>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-4">
+      <%= form.label :status, class: "form-label" %>
+      <%= form.select :status, Course.statuses.keys.map { |s| [ s.humanize, s ] }, {}, class: "form-select" %>
+    </div>
+    <div class="col-md-4">
+      <%= form.label :level, class: "form-label" %>
+      <%= form.text_field :level, class: "form-control", placeholder: "e.g. E1" %>
+    </div>
+    <div class="col-md-4">
+      <%= form.label :progress_percentage, "Progress %", class: "form-label" %>
+      <%= form.number_field :progress_percentage, class: "form-control", min: 0, max: 100 %>
+    </div>
+  </div>
+
+  <div>
+    <%= form.label :notes, class: "form-label" %>
+    <%= form.text_area :notes, class: "form-control", rows: 3 %>
+  </div>
+
+  <div>
+    <%= form.submit class: "btn btn-primary" %>
+    <%= link_to "Cancel", (course.persisted? ? course : courses_path), class: "btn btn-outline-secondary" %>
+  </div>
+<% end %>

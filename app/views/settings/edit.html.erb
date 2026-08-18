@@ -1,0 +1,35 @@
+<% content_for :title, "Settings" %>
+
+<h1 class="h3 mb-3">⚙️ Settings</h1>
+
+<div class="card">
+  <div class="card-body">
+    <h2 class="h5 card-title">Default Daily Goal</h2>
+    <p class="text-muted small">
+      This text is copied into each new day's goal automatically. Editing it will not
+      change any goals that already exist, and past goals stay exactly as they were recorded.
+    </p>
+
+    <%= form_with model: @app_setting, url: settings_path, method: :patch, class: "vstack gap-3" do |form| %>
+      <% if @app_setting.errors.any? %>
+        <div class="alert alert-danger">
+          <strong><%= pluralize(@app_setting.errors.count, "error") %> prevented this setting from being saved:</strong>
+          <ul class="mb-0">
+            <% @app_setting.errors.each do |error| %>
+              <li><%= error.full_message %></li>
+            <% end %>
+          </ul>
+        </div>
+      <% end %>
+
+      <div>
+        <%= form.label :default_daily_goal, class: "form-label" %>
+        <%= form.text_area :default_daily_goal, class: "form-control", rows: 2 %>
+      </div>
+
+      <div>
+        <%= form.submit "Save Settings", class: "btn btn-primary" %>
+      </div>
+    <% end %>
+  </div>
+</div>

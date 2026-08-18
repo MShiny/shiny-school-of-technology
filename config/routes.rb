@@ -9,6 +9,19 @@ Rails.application.routes.draw do
   # get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
   # get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
 
-  # Defines the root path route ("/")
-  # root "posts#index"
+  root "dashboard#index"
+
+  resources :degrees
+  resources :subjects
+  resources :courses
+
+  resources :daily_goals, only: [ :index, :show, :edit, :update ] do
+    member do
+      patch :mark_met
+      patch :mark_not_met
+      patch :reset
+    end
+  end
+
+  resource :settings, only: [ :edit, :update ]
 end

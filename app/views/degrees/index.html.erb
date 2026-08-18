@@ -1,0 +1,34 @@
+<% content_for :title, "Degrees" %>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h3 mb-0">🏛️ Degrees</h1>
+  <%= link_to "New Degree", new_degree_path, class: "btn btn-primary" %>
+</div>
+
+<% if @degrees.any? %>
+  <div class="row g-3">
+    <% @degrees.each do |degree| %>
+      <div class="col-md-6 col-lg-4">
+        <div class="card h-100">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start">
+              <h2 class="card-title h5"><%= link_to degree.name, degree, class: "text-decoration-none" %></h2>
+              <%= status_badge(degree.status) %>
+            </div>
+            <p class="card-text text-muted small"><%= truncate(degree.description, length: 100) if degree.description.present? %></p>
+            <p class="card-text small">
+              <strong><%= pluralize(degree.subjects.size, "subject") %></strong>
+            </p>
+          </div>
+          <div class="card-footer bg-transparent border-0 d-flex gap-2">
+            <%= link_to "View", degree, class: "btn btn-sm btn-outline-primary" %>
+            <%= link_to "Edit", edit_degree_path(degree), class: "btn btn-sm btn-outline-secondary" %>
+            <%= button_to "Delete", degree, method: :delete, class: "btn btn-sm btn-outline-danger", form: { data: { turbo_confirm: "Delete this degree?" } } %>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  </div>
+<% else %>
+  <p class="text-muted">No degrees yet. Create your first self-directed degree to get started.</p>
+<% end %>

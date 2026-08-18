@@ -1,0 +1,18 @@
+<% content_for :title, "Courses" %>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h3 mb-0">🧑‍💻 Courses</h1>
+  <%= link_to "New Course", new_course_path, class: "btn btn-primary" %>
+</div>
+
+<% if @courses.any? %>
+  <div class="row g-3">
+    <% @courses.each do |course| %>
+      <div class="col-md-6 col-lg-4">
+        <%= render "course_card", course: course %>
+      </div>
+    <% end %>
+  </div>
+<% else %>
+  <p class="text-muted">No courses yet. Add a course or resource you're using for a subject.</p>
+<% end %>

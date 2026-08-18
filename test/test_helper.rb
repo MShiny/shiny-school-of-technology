@@ -7,8 +7,9 @@ module ActiveSupport
     # Run tests in parallel with specified workers
     parallelize(workers: :number_of_processors)
 
-    # Setup all fixtures in test/fixtures/*.yml for all tests in alphabetical order.
-    fixtures :all
+    # This app builds test data explicitly in each test rather than via fixtures,
+    # so fixture auto-loading is disabled (it also requires Postgres superuser
+    # privileges to validate foreign keys, which the app's database role does not have).
 
     # Add more helper methods to be used by all tests here...
   end

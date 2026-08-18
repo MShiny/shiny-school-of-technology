@@ -1,0 +1,27 @@
+<% content_for :title, "Daily Goal - #{@daily_goal.date.strftime('%b %-d, %Y')}" %>
+
+<div class="d-flex justify-content-between align-items-start mb-3">
+  <div>
+    <h1 class="h3 mb-1"><%= @daily_goal.date.strftime("%A, %B %-d, %Y") %></h1>
+    <%= status_badge(@daily_goal.status) %>
+  </div>
+  <%= link_to "Edit", edit_daily_goal_path(@daily_goal), class: "btn btn-outline-secondary" %>
+</div>
+
+<p class="lead"><%= @daily_goal.goal_text %></p>
+
+<% if @daily_goal.notes.present? %>
+  <div class="alert alert-light border">
+    <strong>Notes:</strong> <%= @daily_goal.notes %>
+  </div>
+<% end %>
+
+<div class="d-flex gap-2 mt-3">
+  <%= button_to "Mark Met", mark_met_daily_goal_path(@daily_goal), method: :patch, class: "btn btn-success" %>
+  <%= button_to "Mark Not Met", mark_not_met_daily_goal_path(@daily_goal), method: :patch, class: "btn btn-danger" %>
+  <%= button_to "Reset to Pending", reset_daily_goal_path(@daily_goal), method: :patch, class: "btn btn-outline-secondary" %>
+</div>
+
+<p class="mt-4">
+  <%= link_to "← Back to Daily Goals", daily_goals_path, class: "btn btn-link ps-0" %>
+</p>
