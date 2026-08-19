@@ -1,38 +1,32 @@
-<%= form_with model: subject, class: "vstack gap-3" do |form| %>
-  <% if subject.errors.any? %>
-    <div class="alert alert-danger">
-      <strong><%= pluralize(subject.errors.count, "error") %> prevented this subject from being saved:</strong>
-      <ul class="mb-0">
-        <% subject.errors.each do |error| %>
-          <li><%= error.full_message %></li>
-        <% end %>
-      </ul>
+<%= form_with model: subject, class: "form-card" do |form| %>
+  <%= render "shared/form_errors", object: subject %>
+
+  <div class="form-section">
+    <p class="form-section-title">Basics</p>
+    <div class="mb-3">
+      <%= form.label :name, class: "form-label" %>
+      <%= form.text_field :name, class: "form-control", placeholder: "e.g. Machine Learning" %>
     </div>
-  <% end %>
 
-  <div>
-    <%= form.label :name, class: "form-label" %>
-    <%= form.text_field :name, class: "form-control", placeholder: "e.g. Machine Learning" %>
+    <div class="mb-3">
+      <%= form.label :description, class: "form-label" %>
+      <%= form.text_area :description, class: "form-control", rows: 3 %>
+    </div>
+
+    <div class="mb-3">
+      <%= form.label :status, class: "form-label" %>
+      <%= form.select :status, Subject.statuses.keys.map { |s| [ s.humanize, s ] }, {}, class: "form-select", style: "max-width: 16rem;" %>
+    </div>
+
+    <div>
+      <%= form.label :notes, class: "form-label" %>
+      <%= form.text_area :notes, class: "form-control", rows: 2 %>
+    </div>
   </div>
 
-  <div>
-    <%= form.label :description, class: "form-label" %>
-    <%= form.text_area :description, class: "form-control", rows: 3 %>
-  </div>
-
-  <div>
-    <%= form.label :status, class: "form-label" %>
-    <%= form.select :status, Subject.statuses.keys.map { |s| [ s.humanize, s ] }, {}, class: "form-select" %>
-  </div>
-
-  <div>
-    <%= form.label :notes, class: "form-label" %>
-    <%= form.text_area :notes, class: "form-control", rows: 2 %>
-  </div>
-
-  <div>
-    <%= form.label :degree_ids, "Degrees", class: "form-label d-block" %>
-    <div class="row row-cols-2 row-cols-md-3 g-2 border rounded p-2">
+  <div class="form-section">
+    <p class="form-section-title">Degrees</p>
+    <div class="row row-cols-2 row-cols-md-3 g-2 border rounded-3 p-3">
       <%= form.collection_check_boxes :degree_ids, Degree.ordered, :id, :name do |b| %>
         <div class="col form-check">
           <%= b.check_box(class: "form-check-input") %>
@@ -42,7 +36,7 @@
     </div>
   </div>
 
-  <div>
+  <div class="d-flex gap-2 mt-4">
     <%= form.submit class: "btn btn-primary" %>
     <%= link_to "Cancel", (subject.persisted? ? subject : subjects_path), class: "btn btn-outline-secondary" %>
   </div>

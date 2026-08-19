@@ -1,0 +1,21 @@
+<%
+nav_items = [
+  { label: "Dashboard", path: root_path, icon: "bi-speedometer2", active: current_page?(root_path) },
+  { label: "Degrees", path: degrees_path, icon: "bi-mortarboard", active: current_page?(degrees_path) },
+  { label: "Subjects", path: subjects_path, icon: "bi-journal-bookmark", active: current_page?(subjects_path) },
+  { label: "Courses", path: courses_path, icon: "bi-laptop", active: current_page?(courses_path) },
+  { label: "Personal Projects", path: personal_projects_path, icon: "bi-rocket-takeoff", active: current_page?(personal_projects_path) },
+  { label: "Daily Goals", path: daily_goals_path, icon: "bi-check2-square", active: current_page?(daily_goals_path) },
+  { label: "Settings", path: default_goal_items_path, icon: "bi-gear", active: current_page?(default_goal_items_path) }
+]
+%>
+<ul class="sidebar-nav">
+  <% nav_items.each do |item| %>
+    <li>
+      <%= link_to item[:path], class: "sidebar-link #{'active' if item[:active]}" do %>
+        <i class="bi <%= item[:icon] %>"></i>
+        <span><%= item[:label] %></span>
+      <% end %>
+    </li>
+  <% end %>
+</ul>

@@ -1,64 +1,75 @@
 <% content_for :title, "Settings" %>
 
-<h1 class="h3 mb-1">⚙️ Settings</h1>
-<p class="text-muted small">
-  These default items are copied into each new day's checklist automatically. Editing this
-  list will not change any existing day's checklist &mdash; today's and past checklists stay
-  exactly as they were recorded.
-</p>
+<div class="page-header">
+  <div>
+    <p class="page-eyebrow">Settings</p>
+    <h1 class="h2">Default Daily Checklist</h1>
+    <p class="text-muted mb-0" style="max-width: 42rem;">
+      These items are copied into each new day's checklist automatically. Editing this
+      list will not change any existing day's checklist &mdash; today's and past checklists stay
+      exactly as they were recorded.
+    </p>
+  </div>
+</div>
 
 <div class="card mb-4">
   <div class="card-body">
-    <h2 class="h5 card-title">Default Daily Checklist</h2>
-
     <% if @default_goal_items.any? %>
-      <div class="list-group mb-3">
+      <div class="vstack gap-2 mb-4">
         <% @default_goal_items.each do |item| %>
-          <div class="list-group-item d-flex justify-content-between align-items-center <%= 'text-muted' unless item.active? %>">
-            <span>
-              <span class="badge text-bg-light border me-2">#<%= item.position %></span>
+          <div class="checklist-item <%= 'is-incomplete text-muted' unless item.active? %>">
+            <span class="badge text-bg-light border">#<%= item.position %></span>
+            <span class="checklist-item-text">
               <%= item.text %>
               <% unless item.active? %>
                 <span class="badge text-bg-secondary ms-1">Inactive</span>
               <% end %>
             </span>
-            <span class="d-flex gap-2">
-              <%= link_to "Edit", edit_default_goal_item_path(item), class: "btn btn-sm btn-outline-secondary" %>
-              <%= button_to (item.active? ? "Deactivate" : "Activate"), toggle_active_default_goal_item_path(item), method: :patch, class: "btn btn-sm btn-outline-secondary" %>
-              <%= button_to "Delete", default_goal_item_path(item), method: :delete, class: "btn btn-sm btn-outline-danger", form: { data: { turbo_confirm: "Delete this default item?" } } %>
+            <span class="d-flex gap-2 flex-shrink-0">
+              <%= link_to edit_default_goal_item_path(item), class: "btn btn-sm btn-outline-secondary" do %>
+                <i class="bi bi-pencil"></i>
+              <% end %>
+              <%= button_to toggle_active_default_goal_item_path(item), method: :patch, class: "btn btn-sm btn-outline-secondary" do %>
+                <i class="bi <%= item.active? ? 'bi-pause' : 'bi-play' %>"></i>
+              <% end %>
+              <%= button_to default_goal_item_path(item), method: :delete, class: "btn btn-sm btn-outline-danger", form: { data: { turbo_confirm: "Delete this default item?" } } do %>
+                <i class="bi bi-trash3"></i>
+              <% end %>
             </span>
           </div>
         <% end %>
       </div>
     <% else %>
-      <p class="text-muted small">No default checklist items yet. Add one below.</p>
+      <div class="empty-state empty-state-inline mb-4">No default checklist items yet. Add one below.</div>
     <% end %>
 
-    <h3 class="h6 mt-4">Add a Default Item</h3>
-    <%= form_with model: @default_goal_item, url: default_goal_items_path, class: "row g-2 align-items-end" do |form| %>
-      <% if @default_goal_item.errors.any? %>
-        <div class="col-12">
-          <div class="alert alert-danger mb-2">
-            <ul class="mb-0">
-              <% @default_goal_item.errors.each do |error| %>
-                <li><%= error.full_message %></li>
-              <% end %>
-            </ul>
+    <div class="form-section">
+      <p class="form-section-title mb-2">Add a Default Item</p>
+      <%= form_with model: @default_goal_item, url: default_goal_items_path, class: "row g-2 align-items-end" do |form| %>
+        <% if @default_goal_item.errors.any? %>
+          <div class="col-12">
+            <div class="alert alert-danger mb-2">
+              <ul class="mb-0">
+                <% @default_goal_item.errors.each do |error| %>
+                  <li><%= error.full_message %></li>
+                <% end %>
+              </ul>
+            </div>
           </div>
+        <% end %>
+
+        <div class="col-md-7">
+          <%= form.label :text, "Item text", class: "form-label" %>
+          <%= form.text_field :text, class: "form-control", placeholder: "e.g. Practice Python" %>
+        </div>
+        <div class="col-md-3">
+          <%= form.label :position, class: "form-label" %>
+          <%= form.number_field :position, class: "form-control", min: 0, placeholder: "auto" %>
+        </div>
+        <div class="col-md-2">
+          <%= form.submit "Add", class: "btn btn-primary w-100" %>
         </div>
       <% end %>
-
-      <div class="col-md-7">
-        <%= form.label :text, "Item text", class: "form-label" %>
-        <%= form.text_field :text, class: "form-control", placeholder: "e.g. Practice Python" %>
-      </div>
-      <div class="col-md-3">
-        <%= form.label :position, class: "form-label" %>
-        <%= form.number_field :position, class: "form-control", min: 0, placeholder: "auto" %>
-      </div>
-      <div class="col-md-2">
-        <%= form.submit "Add", class: "btn btn-primary w-100" %>
-      </div>
-    <% end %>
+    </div>
   </div>
 </div>

@@ -1,0 +1,13 @@
+<% if object.errors.any? %>
+  <div class="alert alert-danger">
+    <div class="d-flex align-items-center gap-2 fw-semibold mb-1">
+      <i class="bi bi-exclamation-triangle-fill"></i>
+      <%= pluralize(object.errors.count, "error") %> prevented this <%= object.model_name.human.downcase %> from being saved:
+    </div>
+    <ul class="mb-0 ps-4">
+      <% object.errors.each do |error| %>
+        <li><%= error.full_message %></li>
+      <% end %>
+    </ul>
+  </div>
+<% end %>

@@ -2,7 +2,7 @@ class SubjectsController < ApplicationController
   before_action :set_subject, only: %i[ show edit update destroy ]
 
   def index
-    @subjects = Subject.ordered.includes(:degrees)
+    @subjects = Subject.ordered.includes(:degrees, :courses)
   end
 
   def show

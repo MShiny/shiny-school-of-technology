@@ -73,6 +73,6 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
   test "dashboard shows an empty state when there are no active or planned personal projects" do
     get root_url
 
-    assert_match "No active or planned personal projects", response.body
+    assert_match "No active projects right now", response.body
   end
 end

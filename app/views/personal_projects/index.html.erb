@@ -1,41 +1,53 @@
 <% content_for :title, "Personal Projects" %>
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <h1 class="h3 mb-0">🚀 Personal Projects</h1>
-  <%= link_to "New Project", new_personal_project_path, class: "btn btn-primary" %>
+<div class="page-header">
+  <div>
+    <p class="page-eyebrow">Building</p>
+    <h1 class="h2">Personal Projects</h1>
+  </div>
+  <%= link_to new_personal_project_path, class: "btn btn-primary" do %>
+    <i class="bi bi-plus-lg me-1"></i>Add Project
+  <% end %>
 </div>
 
 <% if @personal_projects.any? %>
   <div class="row g-3">
     <% @personal_projects.each do |project| %>
       <div class="col-md-6 col-lg-4">
-        <div class="card h-100">
+        <div class="card project-card h-100">
           <div class="card-body">
-            <div class="d-flex justify-content-between align-items-start">
-              <h2 class="card-title h5"><%= link_to project.name, project, class: "text-decoration-none" %></h2>
+            <div class="d-flex justify-content-between align-items-start gap-2">
+              <h2 class="card-title h6 mb-0"><%= link_to project.name, project, class: "text-decoration-none text-body" %></h2>
               <%= status_badge(project.status) %>
             </div>
             <% if project.goal.present? %>
-              <p class="card-text small text-muted"><%= truncate(project.goal, length: 100) %></p>
+              <p class="card-text small text-muted mt-2 mb-1"><i class="bi bi-bullseye me-1"></i><%= truncate(project.goal, length: 100) %></p>
             <% end %>
             <% if project.target_date.present? %>
-              <p class="card-text small">🎯 Target: <%= project.target_date.strftime("%b %-d, %Y") %></p>
+              <p class="card-text small text-muted mb-1"><i class="bi bi-flag me-1"></i>Target: <%= project.target_date.strftime("%b %-d, %Y") %></p>
             <% end %>
-            <p class="card-text small">
-              <% project.subjects.each do |subject| %>
-                <span class="badge text-bg-light border me-1"><%= subject.name %></span>
-              <% end %>
-            </p>
+            <% if project.subjects.any? %>
+              <p class="card-text mb-0 mt-2">
+                <% project.subjects.each do |subject| %>
+                  <span class="badge text-bg-light border me-1"><%= subject.name %></span>
+                <% end %>
+              </p>
+            <% end %>
           </div>
-          <div class="card-footer bg-transparent border-0 d-flex gap-2">
-            <%= link_to "View", project, class: "btn btn-sm btn-outline-primary" %>
+          <div class="card-footer bg-transparent border-top-0 pt-0 d-flex gap-2">
+            <%= link_to "View", project, class: "btn btn-sm btn-outline-secondary" %>
             <%= link_to "Edit", edit_personal_project_path(project), class: "btn btn-sm btn-outline-secondary" %>
-            <%= button_to "Delete", project, method: :delete, class: "btn btn-sm btn-outline-danger", form: { data: { turbo_confirm: "Delete this project?" } } %>
+            <%= button_to project, method: :delete, class: "btn btn-sm btn-outline-danger ms-auto", form: { data: { turbo_confirm: "Delete this project?" } } do %>
+              <i class="bi bi-trash3"></i>
+            <% end %>
           </div>
         </div>
       </div>
     <% end %>
   </div>
 <% else %>
-  <p class="text-muted">No personal projects yet. Create one to start tracking a self-directed build.</p>
+  <div class="empty-state">
+    <i class="bi bi-rocket-takeoff empty-state-icon"></i>
+    No personal projects yet. Create one to start tracking a self-directed build.
+  </div>
 <% end %>

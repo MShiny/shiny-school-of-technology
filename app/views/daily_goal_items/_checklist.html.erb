@@ -8,39 +8,45 @@ percentage = total.zero? ? 0 : ((completed.to_f / total) * 100).round
 
 <div class="checklist">
   <% if items.any? %>
-    <div class="list-group mb-2">
+    <div class="checklist-list mb-1">
       <% items.each do |item| %>
-        <div class="list-group-item d-flex align-items-center gap-2 <%= "text-decoration-line-through text-muted" if item.completed? %>">
+        <div class="checklist-item <%= item.completed? ? 'is-complete' : 'is-incomplete' %>">
           <% if editable %>
-            <%= button_to toggle_daily_goal_item_path(item), method: :patch, class: "btn btn-sm #{item.completed? ? 'btn-success' : 'btn-outline-secondary'}", form: { class: "mb-0" } do %>
-              <%= item.completed? ? "☑" : "☐" %>
+            <%= button_to toggle_daily_goal_item_path(item), method: :patch, class: "checklist-toggle #{'is-complete' if item.completed?}", form: { class: "mb-0" }, aria: { label: item.completed? ? "Mark as not done" : "Mark as done" } do %>
+              <i class="bi bi-check-lg"></i>
             <% end %>
-            <%= form_with model: item, url: daily_goal_item_path(item), method: :patch, class: "flex-grow-1 d-flex gap-1 mb-0" do |f| %>
-              <%= f.text_field :text, class: "form-control form-control-sm", "aria-label": "Item text" %>
-              <%= f.submit "Save", class: "btn btn-sm btn-outline-primary" %>
+            <%= form_with model: item, url: daily_goal_item_path(item), method: :patch, class: "checklist-item-text d-flex gap-1 mb-0" do |f| %>
+              <%= f.text_field :text, class: "form-control form-control-sm border-0 bg-transparent px-1", "aria-label": "Item text" %>
+              <%= f.button type: "submit", class: "btn btn-sm btn-outline-primary flex-shrink-0", aria: { label: "Save item" } do %>
+                <i class="bi bi-check-lg"></i>
+              <% end %>
             <% end %>
-            <%= button_to "✕", daily_goal_item_path(item), method: :delete, class: "btn btn-sm btn-outline-danger", form: { class: "mb-0", data: { turbo_confirm: "Remove this item?" } } %>
+            <%= button_to daily_goal_item_path(item), method: :delete, class: "btn btn-sm btn-outline-danger border-0", form: { class: "mb-0", data: { turbo_confirm: "Remove this item?" } }, aria: { label: "Remove item" } do %>
+              <i class="bi bi-x-lg"></i>
+            <% end %>
           <% else %>
-            <span><%= item.completed? ? "☑" : "☐" %></span>
-            <span class="flex-grow-1"><%= item.text %></span>
+            <span class="checklist-item-static-mark"><i class="bi <%= item.completed? ? 'bi-check-circle-fill' : 'bi-circle' %>"></i></span>
+            <span class="checklist-item-text"><%= item.text %></span>
           <% end %>
         </div>
       <% end %>
     </div>
 
-    <div class="progress mb-1" style="height: 8px;">
-      <div class="progress-bar bg-success" role="progressbar" style="width: <%= percentage %>%;" aria-valuenow="<%= percentage %>" aria-valuemin="0" aria-valuemax="100"></div>
+    <div class="checklist-progress-summary">
+      <div class="progress" role="progressbar" aria-valuenow="<%= percentage %>" aria-valuemin="0" aria-valuemax="100">
+        <div class="progress-bar bg-success" style="width: <%= percentage %>%;"></div>
+      </div>
+      <span class="progress-count"><%= completed %> / <%= total %> completed</span>
     </div>
-    <p class="small text-muted mb-2"><%= completed %> / <%= total %> completed</p>
   <% else %>
-    <p class="text-muted small mb-2">No checklist items for this day.</p>
+    <div class="empty-state empty-state-inline mb-0">No checklist items for this day.</div>
   <% end %>
 
   <% if editable %>
-    <%= form_with url: daily_goal_items_path, method: :post, class: "d-flex gap-1" do %>
+    <%= form_with url: daily_goal_items_path, method: :post, class: "checklist-add-form" do %>
       <%= hidden_field_tag "daily_goal_item[daily_goal_id]", daily_goal.id %>
       <%= text_field_tag "daily_goal_item[text]", nil, class: "form-control form-control-sm", placeholder: "Add an item for today...", required: true %>
-      <%= submit_tag "Add", class: "btn btn-sm btn-primary" %>
+      <%= submit_tag "Add", class: "btn btn-sm btn-primary flex-shrink-0" %>
     <% end %>
   <% end %>
 </div>

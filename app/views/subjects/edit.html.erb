@@ -1,5 +1,10 @@
 <% content_for :title, "Edit #{@subject.name}" %>
 
-<h1 class="h3 mb-3">Edit Subject</h1>
+<div class="page-header">
+  <div>
+    <p class="page-eyebrow">Subjects</p>
+    <h1 class="h2">Edit Subject</h1>
+  </div>
+</div>
 
 <%= render "form", subject: @subject %>

@@ -1,34 +1,27 @@
-<%= form_with model: default_goal_item, class: "vstack gap-3" do |form| %>
-  <% if default_goal_item.errors.any? %>
-    <div class="alert alert-danger">
-      <strong><%= pluralize(default_goal_item.errors.count, "error") %> prevented this item from being saved:</strong>
-      <ul class="mb-0">
-        <% default_goal_item.errors.each do |error| %>
-          <li><%= error.full_message %></li>
-        <% end %>
-      </ul>
-    </div>
-  <% end %>
+<%= form_with model: default_goal_item, class: "form-card" do |form| %>
+  <%= render "shared/form_errors", object: default_goal_item %>
 
-  <div>
-    <%= form.label :text, "Item text", class: "form-label" %>
-    <%= form.text_field :text, class: "form-control" %>
-  </div>
-
-  <div class="row">
-    <div class="col-md-6">
-      <%= form.label :position, class: "form-label" %>
-      <%= form.number_field :position, class: "form-control", min: 0 %>
+  <div class="form-section">
+    <div class="mb-3">
+      <%= form.label :text, "Item text", class: "form-label" %>
+      <%= form.text_field :text, class: "form-control" %>
     </div>
-    <div class="col-md-6 d-flex align-items-center">
-      <div class="form-check mt-4">
-        <%= form.check_box :active, class: "form-check-input" %>
-        <%= form.label :active, class: "form-check-label" %>
+
+    <div class="row">
+      <div class="col-md-6 mb-3 mb-md-0">
+        <%= form.label :position, class: "form-label" %>
+        <%= form.number_field :position, class: "form-control", min: 0 %>
+      </div>
+      <div class="col-md-6 d-flex align-items-center">
+        <div class="form-check mt-4">
+          <%= form.check_box :active, class: "form-check-input" %>
+          <%= form.label :active, class: "form-check-label" %>
+        </div>
       </div>
     </div>
   </div>
 
-  <div>
+  <div class="d-flex gap-2 mt-4">
     <%= form.submit class: "btn btn-primary" %>
     <%= link_to "Cancel", default_goal_items_path, class: "btn btn-outline-secondary" %>
   </div>

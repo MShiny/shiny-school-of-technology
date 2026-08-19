@@ -1,27 +1,25 @@
 <% content_for :title, "Edit Daily Goal - #{@daily_goal.date.strftime('%b %-d, %Y')}" %>
 
-<h1 class="h3 mb-3">Edit Daily Goal Notes</h1>
-<p class="text-muted"><%= @daily_goal.date.strftime("%A, %B %-d, %Y") %></p>
-
-<%= form_with model: @daily_goal, class: "vstack gap-3" do |form| %>
-  <% if @daily_goal.errors.any? %>
-    <div class="alert alert-danger">
-      <strong><%= pluralize(@daily_goal.errors.count, "error") %> prevented this daily goal from being saved:</strong>
-      <ul class="mb-0">
-        <% @daily_goal.errors.each do |error| %>
-          <li><%= error.full_message %></li>
-        <% end %>
-      </ul>
-    </div>
-  <% end %>
-
+<div class="page-header">
   <div>
-    <%= form.label :notes, class: "form-label" %>
-    <%= form.text_area :notes, class: "form-control", rows: 3 %>
-    <div class="form-text">Checklist items can be edited directly from today's checklist.</div>
+    <p class="page-eyebrow">Journal Entry</p>
+    <h1 class="h2 mb-1">Edit Daily Goal Notes</h1>
+    <p class="text-muted mb-0"><%= @daily_goal.date.strftime("%A, %B %-d, %Y") %></p>
+  </div>
+</div>
+
+<%= form_with model: @daily_goal, class: "form-card" do |form| %>
+  <%= render "shared/form_errors", object: @daily_goal %>
+
+  <div class="form-section">
+    <div>
+      <%= form.label :notes, class: "form-label" %>
+      <%= form.text_area :notes, class: "form-control", rows: 3 %>
+      <div class="form-text">Checklist items can be edited directly from today's checklist.</div>
+    </div>
   </div>
 
-  <div>
+  <div class="d-flex gap-2 mt-4">
     <%= form.submit class: "btn btn-primary" %>
     <%= link_to "Cancel", @daily_goal, class: "btn btn-outline-secondary" %>
   </div>

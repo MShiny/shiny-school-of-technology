@@ -1,36 +1,55 @@
 <% content_for :title, "Subjects" %>
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <h1 class="h3 mb-0">📚 Subjects</h1>
-  <%= link_to "New Subject", new_subject_path, class: "btn btn-primary" %>
+<div class="page-header">
+  <div>
+    <p class="page-eyebrow">Curriculum</p>
+    <h1 class="h2">Subjects</h1>
+  </div>
+  <%= link_to new_subject_path, class: "btn btn-primary" do %>
+    <i class="bi bi-plus-lg me-1"></i>Add Subject
+  <% end %>
 </div>
 
 <% if @subjects.any? %>
-  <div class="row g-3">
+  <div class="vstack gap-2">
     <% @subjects.each do |subject| %>
-      <div class="col-md-6 col-lg-4">
-        <div class="card h-100">
-          <div class="card-body">
-            <div class="d-flex justify-content-between align-items-start">
-              <h2 class="card-title h5"><%= link_to subject.name, subject, class: "text-decoration-none" %></h2>
-              <%= status_badge(subject.status) %>
-            </div>
-            <p class="card-text text-muted small"><%= truncate(subject.description, length: 100) if subject.description.present? %></p>
-            <p class="card-text small">
-              <% subject.degrees.each do |degree| %>
-                <span class="badge text-bg-light border me-1"><%= degree.name %></span>
+      <div class="card">
+        <div class="card-body py-3">
+          <div class="d-flex justify-content-between align-items-start gap-2 flex-wrap">
+            <div class="min-w-0">
+              <div class="d-flex align-items-center gap-2 flex-wrap">
+                <h2 class="card-title h6 mb-0"><%= link_to subject.name, subject, class: "text-decoration-none text-body" %></h2>
+                <%= status_badge(subject.status) %>
+                <% subject.degrees.each do |degree| %>
+                  <span class="badge text-bg-light border"><%= degree.name %></span>
+                <% end %>
+              </div>
+              <% if subject.description.present? %>
+                <p class="card-text small text-muted mt-1 mb-0"><%= truncate(subject.description, length: 130) %></p>
               <% end %>
-            </p>
-          </div>
-          <div class="card-footer bg-transparent border-0 d-flex gap-2">
-            <%= link_to "View", subject, class: "btn btn-sm btn-outline-primary" %>
-            <%= link_to "Edit", edit_subject_path(subject), class: "btn btn-sm btn-outline-secondary" %>
-            <%= button_to "Delete", subject, method: :delete, class: "btn btn-sm btn-outline-danger", form: { data: { turbo_confirm: "Delete this subject?" } } %>
+              <% current_course = subject.courses.detect(&:in_progress?) %>
+              <% if current_course.present? %>
+                <p class="card-text small mt-1 mb-0">
+                  <i class="bi bi-play-circle text-muted me-1"></i>
+                  <%= link_to current_course.title, current_course, class: "text-decoration-none" %>
+                </p>
+              <% end %>
+            </div>
+            <div class="d-flex gap-2 flex-shrink-0">
+              <%= link_to "View", subject, class: "btn btn-sm btn-outline-secondary" %>
+              <%= link_to "Edit", edit_subject_path(subject), class: "btn btn-sm btn-outline-secondary" %>
+              <%= button_to subject, method: :delete, class: "btn btn-sm btn-outline-danger", form: { data: { turbo_confirm: "Delete this subject?" } } do %>
+                <i class="bi bi-trash3"></i>
+              <% end %>
+            </div>
           </div>
         </div>
       </div>
     <% end %>
   </div>
 <% else %>
-  <p class="text-muted">No subjects yet. Create one to start tracking your learning.</p>
+  <div class="empty-state">
+    <i class="bi bi-journal-bookmark empty-state-icon"></i>
+    No subjects yet. Create one to start tracking your learning.
+  </div>
 <% end %>

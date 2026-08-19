@@ -1,38 +1,49 @@
 <% content_for :title, @degree.name %>
 
-<div class="d-flex justify-content-between align-items-start mb-3">
+<div class="page-header">
   <div>
-    <h1 class="h3 mb-1"><%= @degree.name %></h1>
+    <p class="page-eyebrow">Degree</p>
+    <h1 class="h2 mb-2"><%= @degree.name %></h1>
     <%= status_badge(@degree.status) %>
   </div>
   <div class="d-flex gap-2">
-    <%= link_to "Edit", edit_degree_path(@degree), class: "btn btn-outline-secondary" %>
-    <%= button_to "Delete", @degree, method: :delete, class: "btn btn-outline-danger", form: { data: { turbo_confirm: "Delete this degree?" } } %>
+    <%= link_to edit_degree_path(@degree), class: "btn btn-outline-secondary" do %>
+      <i class="bi bi-pencil me-1"></i>Edit
+    <% end %>
+    <%= button_to @degree, method: :delete, class: "btn btn-outline-danger", form: { data: { turbo_confirm: "Delete this degree?" } } do %>
+      <i class="bi bi-trash3 me-1"></i>Delete
+    <% end %>
   </div>
 </div>
 
 <% if @degree.description.present? %>
-  <p class="lead"><%= @degree.description %></p>
+  <p class="text-muted mb-4"><%= @degree.description %></p>
 <% end %>
 
-<h2 class="h5 mt-4">Subjects</h2>
+<div class="section-heading">
+  <h2><i class="bi bi-journal-bookmark text-muted"></i> Curriculum</h2>
+</div>
 <% if @subjects.any? %>
-  <div class="row g-2">
+  <div class="row g-2 mb-3">
     <% @subjects.each do |subject| %>
       <div class="col-md-6 col-lg-4">
-        <div class="card">
-          <div class="card-body d-flex justify-content-between align-items-center">
-            <%= link_to subject.name, subject, class: "text-decoration-none fw-semibold" %>
-            <%= status_badge(subject.status) %>
+        <%= link_to subject, class: "card h-100 text-decoration-none text-body" do %>
+          <div class="card-body py-3">
+            <div class="d-flex justify-content-between align-items-center">
+              <span class="fw-semibold"><%= subject.name %></span>
+              <%= status_badge(subject.status) %>
+            </div>
           </div>
-        </div>
+        <% end %>
       </div>
     <% end %>
   </div>
 <% else %>
-  <p class="text-muted">No subjects linked to this degree yet.</p>
+  <div class="empty-state empty-state-inline">No subjects linked to this degree yet.</div>
 <% end %>
 
-<p class="mt-3">
-  <%= link_to "← Back to Degrees", degrees_path, class: "btn btn-link ps-0" %>
+<p class="mt-4">
+  <%= link_to degrees_path, class: "btn btn-link ps-0" do %>
+    <i class="bi bi-arrow-left me-1"></i>Back to Degrees
+  <% end %>
 </p>

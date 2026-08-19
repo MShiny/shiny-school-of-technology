@@ -1,5 +1,10 @@
 <% content_for :title, "Edit #{@degree.name}" %>
 
-<h1 class="h3 mb-3">Edit Degree</h1>
+<div class="page-header">
+  <div>
+    <p class="page-eyebrow">Degrees</p>
+    <h1 class="h2">Edit Degree</h1>
+  </div>
+</div>
 
 <%= render "form", degree: @degree %>

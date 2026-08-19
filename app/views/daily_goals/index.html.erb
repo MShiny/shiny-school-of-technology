@@ -1,19 +1,39 @@
 <% content_for :title, "Daily Goals" %>
 
-<h1 class="h3 mb-3">🗓️ Daily Goals</h1>
+<div class="page-header">
+  <div>
+    <p class="page-eyebrow">Journal</p>
+    <h1 class="h2">Daily Goals</h1>
+    <p class="text-muted mb-0">A running log of what you set out to do, and what actually got done.</p>
+  </div>
+</div>
 
 <% if @daily_goals.any? %>
-  <div class="list-group">
+  <div class="vstack gap-2">
     <% @daily_goals.each do |goal| %>
-      <%= link_to daily_goal_path(goal), class: "list-group-item list-group-item-action d-flex justify-content-between align-items-center" do %>
-        <span>
-          <strong><%= goal.date.strftime("%b %-d, %Y") %></strong>
-          <span class="text-muted ms-2"><%= goal.items_completed_count %> / <%= goal.items_total %> completed</span>
+      <%
+        percentage = goal.items_total.zero? ? 0 : ((goal.items_completed_count.to_f / goal.items_total) * 100).round
+      %>
+      <%= link_to daily_goal_path(goal), class: "journal-row text-decoration-none text-body" do %>
+        <span class="d-flex align-items-center gap-3 min-w-0">
+          <%= status_dot(goal.status) %>
+          <span class="journal-date"><%= goal.date.strftime("%b %-d, %Y") %></span>
+          <span class="journal-progress d-none d-sm-block">
+            <div class="progress" style="height: 6px;">
+              <div class="progress-bar bg-success" role="progressbar" style="width: <%= percentage %>%;"></div>
+            </div>
+          </span>
         </span>
-        <%= status_badge(goal.status) %>
+        <span class="d-flex align-items-center gap-3 flex-shrink-0">
+          <span class="small text-muted"><%= goal.items_completed_count %> / <%= goal.items_total %> completed</span>
+          <%= status_badge(goal.status) %>
+        </span>
       <% end %>
     <% end %>
   </div>
 <% else %>
-  <p class="text-muted">No daily goals recorded yet.</p>
+  <div class="empty-state">
+    <i class="bi bi-journal-check empty-state-icon"></i>
+    No daily goals recorded yet.
+  </div>
 <% end %>

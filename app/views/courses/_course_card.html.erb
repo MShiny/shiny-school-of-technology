@@ -1,31 +1,31 @@
-<%
-show_progress = local_assigns.fetch(:show_progress, true)
-show_roadmap_position = local_assigns.fetch(:show_roadmap_position, false)
-%>
-<div class="card h-100">
-  <div class="card-body">
-    <div class="d-flex justify-content-between align-items-start">
-      <h3 class="card-title h6 mb-1"><%= link_to course.title, course, class: "text-decoration-none" %></h3>
-      <div class="d-flex align-items-center gap-1">
-        <% if show_roadmap_position && course.roadmap_position.present? %>
-          <span class="badge text-bg-secondary rounded-pill">Step <%= course.roadmap_position %></span>
+<div class="card course-card status-<%= course.status %> mb-2">
+  <div class="card-body py-3">
+    <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+      <div class="min-w-0">
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+          <h3 class="card-title h6 mb-0"><%= link_to course.title, course, class: "text-decoration-none text-body" %></h3>
+          <% if course.roadmap_position.present? %>
+            <span class="badge text-bg-light border">Step <%= course.roadmap_position %></span>
+          <% end %>
+          <%= status_badge(course.status) %>
+        </div>
+        <p class="card-text small text-muted mb-0 mt-1">
+          <%= link_to course.subject.name, course.subject, class: "text-decoration-none text-muted" %>
+          <% if course.level.present? %> · Level <%= course.level %><% end %>
+          <% if course.provider.present? %> · <%= course.provider %><% end %>
+        </p>
+        <% if course.purpose.present? %>
+          <p class="card-text small text-muted mb-0 mt-1"><i class="bi bi-bullseye me-1"></i><%= course.purpose %></p>
         <% end %>
-        <%= status_badge(course.status) %>
       </div>
+      <% if course.progress_percentage.present? %>
+        <div class="text-end flex-shrink-0" style="min-width: 7rem;">
+          <div class="progress" style="height: 6px;">
+            <div class="progress-bar" role="progressbar" style="width: <%= course.progress_percentage %>%;"></div>
+          </div>
+          <span class="small text-muted"><%= course.progress_percentage %>% complete</span>
+        </div>
+      <% end %>
     </div>
-    <p class="card-text small text-muted mb-1">
-      <%= link_to course.subject.name, course.subject, class: "text-decoration-none" %>
-      <% if course.provider.present? %> · <%= course.provider %><% end %>
-      <% if course.level.present? %> · Level <%= course.level %><% end %>
-    </p>
-    <% if course.purpose.present? %>
-      <p class="card-text small text-muted mb-1"><em>🎯 <%= course.purpose %></em></p>
-    <% end %>
-    <% if show_progress && course.progress_percentage.present? %>
-      <div class="progress" style="height: 6px;">
-        <div class="progress-bar" role="progressbar" style="width: <%= course.progress_percentage %>%;" aria-valuenow="<%= course.progress_percentage %>" aria-valuemin="0" aria-valuemax="100"></div>
-      </div>
-      <p class="small text-muted mt-1 mb-0"><%= course.progress_percentage %>% complete</p>
-    <% end %>
   </div>
 </div>

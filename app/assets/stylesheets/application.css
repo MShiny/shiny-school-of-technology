@@ -1,50 +1,745 @@
 /*
- * This is a manifest file that'll be compiled into application.css.
+ * Shiny School of Technology - design system
  *
- * With Propshaft, assets are served efficiently without preprocessing steps. You can still include
- * application-wide styles in this file, but keep in mind that CSS precedence will follow the standard
- * cascading order, meaning styles declared later in the document or manifest will override earlier ones,
- * depending on specificity.
- *
- * Consider organizing styles into separate files for maintainability.
+ * Bootstrap 5 (via CDN) remains the underlying utility/component framework.
+ * This file retints it via Bootstrap's own CSS custom properties and layers
+ * a small set of app-specific components (sidebar shell, checklist, roadmap
+ * timeline, stat cards, journal rows) on top.
  */
 
-body {
-  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+/* -------------------------------------------------------------------- */
+/* Design tokens                                                         */
+/* -------------------------------------------------------------------- */
+
+:root {
+  --color-bg: #f6f5f1;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f1f0eb;
+  --color-text: #1c2130;
+  --color-text-muted: #6b7280;
+  --color-border: #e7e4dc;
+
+  --color-accent: #4f46e5;
+  --color-accent-rgb: 79, 70, 229;
+  --color-accent-soft: #edecfd;
+  --color-accent-strong: #3730a3;
+
+  --color-success: #157a4d;
+  --color-success-rgb: 21, 122, 77;
+  --color-success-soft: #e5f5ec;
+
+  --color-warning: #b45309;
+  --color-warning-rgb: 180, 83, 9;
+  --color-warning-soft: #fbedd9;
+
+  --color-danger: #b3261e;
+  --color-danger-rgb: 179, 38, 30;
+  --color-danger-soft: #fbe9e8;
+
+  --color-info: #0f6e8c;
+  --color-info-soft: #e3f2f7;
+
+  --sidebar-bg: #12172a;
+  --sidebar-bg-elevated: #171d33;
+  --sidebar-border: rgba(255, 255, 255, 0.08);
+  --sidebar-text: #9aa3bd;
+  --sidebar-text-active: #ffffff;
+  --sidebar-active-bg: rgba(255, 255, 255, 0.08);
+  --sidebar-accent: #9d97ff;
+
+  --radius-sm: 0.5rem;
+  --radius-md: 0.85rem;
+  --radius-lg: 1.25rem;
+
+  --shadow-sm: 0 1px 2px rgba(20, 20, 30, 0.06);
+  --shadow-md: 0 10px 24px -12px rgba(20, 20, 40, 0.18);
+
+  /* Retint Bootstrap's own variables so components (buttons, badges,
+     links, forms, focus rings) pick up the theme automatically. */
+  --bs-body-bg: var(--color-bg);
+  --bs-body-color: var(--color-text);
+  --bs-border-color: var(--color-border);
+  --bs-border-radius: var(--radius-sm);
+  --bs-border-radius-lg: var(--radius-md);
+  --bs-border-radius-sm: 0.4rem;
+  --bs-border-radius-xl: var(--radius-lg);
+  --bs-primary: var(--color-accent);
+  --bs-primary-rgb: var(--color-accent-rgb);
+  --bs-link-color: var(--color-accent);
+  --bs-link-color-rgb: var(--color-accent-rgb);
+  --bs-link-hover-color: var(--color-accent-strong);
+  --bs-emphasis-color: var(--color-text);
 }
 
-.navbar-brand span.fw-bold {
-  font-size: 1.1rem;
+/* -------------------------------------------------------------------- */
+/* Base                                                                  */
+/* -------------------------------------------------------------------- */
+
+body {
+  font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  letter-spacing: -0.01em;
+}
+
+a {
+  text-decoration: none;
+}
+
+.text-muted {
+  color: var(--color-text-muted) !important;
+}
+
+::selection {
+  background: var(--color-accent-soft);
+}
+
+.btn {
+  font-weight: 500;
+  border-radius: var(--bs-border-radius);
+}
+
+.btn-primary {
+  --bs-btn-hover-bg: var(--color-accent-strong);
+  --bs-btn-hover-border-color: var(--color-accent-strong);
+  --bs-btn-active-bg: var(--color-accent-strong);
+  --bs-btn-active-border-color: var(--color-accent-strong);
+  box-shadow: 0 4px 10px -4px rgba(var(--color-accent-rgb), 0.55);
+}
+
+.btn-outline-danger,
+.btn-danger {
+  --bs-btn-color: var(--color-danger);
+  --bs-btn-border-color: var(--color-danger);
+  --bs-btn-hover-bg: var(--color-danger);
+  --bs-btn-hover-border-color: var(--color-danger);
+}
+
+/* Destructive actions stay visually quiet until interacted with, so they
+   never compete with primary Save/Add buttons. */
+.btn-outline-danger {
+  --bs-btn-color: var(--color-text-muted);
+  --bs-btn-border-color: var(--color-border);
+}
+
+.btn-outline-danger:hover,
+.btn-outline-danger:focus {
+  --bs-btn-hover-color: #fff;
+  color: #fff;
+  background-color: var(--color-danger);
+  border-color: var(--color-danger);
+}
+
+.btn-link {
+  font-weight: 500;
 }
 
 .card {
-  border: none;
-  border-radius: 0.75rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  background: var(--color-surface);
 }
 
 .card-title {
   font-weight: 600;
 }
 
-.todays-goal-card {
-  border-radius: 1rem;
-  background: linear-gradient(135deg, #f8f9ff 0%, #eef2ff 100%);
+.form-control,
+.form-select {
+  border-color: var(--color-border);
 }
 
-.stat-card {
-  text-align: center;
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 0.2rem rgba(var(--color-accent-rgb), 0.15);
 }
 
-.stat-card .stat-value {
-  font-size: 2rem;
-  font-weight: 700;
-}
-
-.streak-flame {
-  font-size: 1.5rem;
+.form-label {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--color-text);
 }
 
 .badge {
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.progress {
+  background-color: var(--color-surface-muted);
+  border-radius: 999px;
+}
+
+.progress-bar {
+  background-color: var(--color-accent);
+}
+
+.nav-pills .nav-link {
+  color: var(--color-text-muted);
   font-weight: 500;
+  border-radius: 999px;
+}
+
+.nav-pills .nav-link.active {
+  background-color: var(--color-accent);
+}
+
+/* -------------------------------------------------------------------- */
+/* App shell: sidebar + topbar                                          */
+/* -------------------------------------------------------------------- */
+
+.app-shell {
+  display: flex;
+  align-items: stretch;
+  min-height: 100vh;
+}
+
+.app-sidebar {
+  width: 260px;
+  flex-shrink: 0;
+  background: var(--sidebar-bg);
+  color: var(--sidebar-text);
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  padding: 1.5rem 1.1rem;
+}
+
+.app-sidebar .sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  color: #fff;
+  padding: 0.25rem 0.5rem 1.5rem;
+  margin-bottom: 0.5rem;
+  border-bottom: 1px solid var(--sidebar-border);
+}
+
+.app-sidebar .sidebar-brand-mark {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, var(--color-accent), var(--sidebar-accent));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.app-sidebar .sidebar-brand-title {
+  font-weight: 700;
+  font-size: 0.95rem;
+  line-height: 1.2;
+}
+
+.app-sidebar .sidebar-brand-subtitle {
+  font-size: 0.72rem;
+  color: var(--sidebar-text);
+}
+
+.sidebar-nav {
+  list-style: none;
+  padding: 0;
+  margin: 0.75rem 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.sidebar-nav .sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: var(--radius-sm);
+  color: var(--sidebar-text);
+  font-weight: 500;
+  font-size: 0.9rem;
+  transition: background-color 0.12s ease, color 0.12s ease;
+}
+
+.sidebar-nav .sidebar-link i {
+  font-size: 1.05rem;
+  width: 1.25rem;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.sidebar-nav .sidebar-link:hover {
+  background: var(--sidebar-active-bg);
+  color: var(--sidebar-text-active);
+}
+
+.sidebar-nav .sidebar-link.active {
+  background: var(--sidebar-active-bg);
+  color: var(--sidebar-text-active);
+  box-shadow: inset 3px 0 0 var(--sidebar-accent);
+}
+
+.app-topbar {
+  background: var(--sidebar-bg);
+  color: #fff;
+  padding: 0.85rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  position: sticky;
+  top: 0;
+  z-index: 1030;
+}
+
+.app-topbar .topbar-toggle {
+  background: transparent;
+  border: 1px solid var(--sidebar-border);
+  color: #fff;
+  border-radius: var(--radius-sm);
+  padding: 0.35rem 0.55rem;
+}
+
+.offcanvas.text-bg-dark {
+  background: var(--sidebar-bg) !important;
+}
+
+.app-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-content {
+  padding: 2rem clamp(1rem, 3vw, 2.5rem);
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  flex: 1;
+}
+
+@media (max-width: 991.98px) {
+  .app-content {
+    padding: 1.25rem;
+  }
+}
+
+/* -------------------------------------------------------------------- */
+/* Page header                                                          */
+/* -------------------------------------------------------------------- */
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+}
+
+.page-header .page-eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  margin-bottom: 0.2rem;
+}
+
+.page-header h1 {
+  font-weight: 700;
+  margin-bottom: 0.15rem;
+}
+
+.section-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.section-heading h2 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin-bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* -------------------------------------------------------------------- */
+/* Dashboard: hero checklist card                                       */
+/* -------------------------------------------------------------------- */
+
+.hero-card {
+  border-radius: var(--radius-lg);
+  background: linear-gradient(155deg, #ffffff 0%, var(--color-accent-soft) 130%);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-md);
+}
+
+.stat-card {
+  border-radius: var(--radius-md);
+  text-align: left;
+  height: 100%;
+}
+
+.stat-card .stat-value {
+  font-size: 1.85rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.stat-card .stat-label {
+  color: var(--color-text-muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+  margin-top: 0.3rem;
+}
+
+.stat-card .stat-icon {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.05rem;
+  margin-bottom: 0.6rem;
+}
+
+/* -------------------------------------------------------------------- */
+/* Checklist                                                             */
+/* -------------------------------------------------------------------- */
+
+.checklist-item {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.55rem 0.15rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.checklist-item:last-child {
+  border-bottom: none;
+}
+
+.checklist-toggle {
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 999px;
+  border: 1.5px solid var(--color-border);
+  background: var(--color-surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 0.9rem;
+  color: transparent;
+  padding: 0;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+}
+
+.checklist-toggle:hover {
+  border-color: var(--color-accent);
+}
+
+.checklist-toggle.is-complete {
+  background: var(--color-success);
+  border-color: var(--color-success);
+  color: #fff;
+}
+
+.checklist-item-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.checklist-item.is-complete .checklist-item-text {
+  color: var(--color-text-muted);
+  text-decoration: line-through;
+  text-decoration-color: var(--color-border);
+}
+
+.checklist-item-static-mark {
+  width: 1.4rem;
+  text-align: center;
+  flex-shrink: 0;
+  color: var(--color-success);
+}
+
+.checklist-item.is-incomplete .checklist-item-static-mark {
+  color: var(--color-border);
+}
+
+.checklist-progress-summary {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.85rem;
+}
+
+.checklist-progress-summary .progress {
+  flex: 1;
+  height: 8px;
+}
+
+.checklist-progress-summary .progress-count {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.checklist-add-form {
+  margin-top: 0.85rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+@media (max-width: 420px) {
+  .checklist-item {
+    align-items: flex-start;
+  }
+
+  .checklist-item-text .form-control {
+    min-width: 0;
+  }
+}
+
+/* -------------------------------------------------------------------- */
+/* Status dots / badges                                                  */
+/* -------------------------------------------------------------------- */
+
+.status-dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 999px;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.status-dot.status-success { background: var(--color-success); }
+.status-dot.status-warning { background: var(--color-warning); }
+.status-dot.status-danger { background: var(--color-danger); }
+.status-dot.status-neutral { background: var(--color-text-muted); }
+.status-dot.status-accent { background: var(--color-accent); }
+
+/* -------------------------------------------------------------------- */
+/* Journal (daily goals history)                                         */
+/* -------------------------------------------------------------------- */
+
+.journal-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  transition: box-shadow 0.12s ease, border-color 0.12s ease;
+}
+
+.journal-row:hover {
+  box-shadow: var(--shadow-sm);
+  border-color: rgba(var(--color-accent-rgb), 0.35);
+}
+
+.journal-row + .journal-row {
+  margin-top: 0.5rem;
+}
+
+.journal-date {
+  font-weight: 600;
+  min-width: 6.5rem;
+}
+
+.journal-progress {
+  flex: 1;
+  max-width: 220px;
+}
+
+/* -------------------------------------------------------------------- */
+/* Roadmap timeline                                                      */
+/* -------------------------------------------------------------------- */
+
+.roadmap-timeline {
+  position: relative;
+  padding-left: 2.5rem;
+}
+
+.roadmap-timeline::before {
+  content: "";
+  position: absolute;
+  left: 1.15rem;
+  top: 0.4rem;
+  bottom: 0.4rem;
+  width: 2px;
+  background: var(--color-border);
+}
+
+.roadmap-step {
+  position: relative;
+  padding-bottom: 1.5rem;
+}
+
+.roadmap-step:last-child {
+  padding-bottom: 0;
+}
+
+.roadmap-step-marker {
+  position: absolute;
+  left: -2.5rem;
+  top: 0;
+  width: 2.3rem;
+  height: 2.3rem;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+  color: var(--color-text-muted);
+  z-index: 1;
+}
+
+.roadmap-step.is-completed .roadmap-step-marker {
+  background: var(--color-success);
+  border-color: var(--color-success);
+  color: #fff;
+}
+
+.roadmap-step.is-current .roadmap-step-marker {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #fff;
+  box-shadow: 0 0 0 4px var(--color-accent-soft);
+}
+
+.roadmap-step-card {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  padding: 1rem 1.15rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.roadmap-step.is-current .roadmap-step-card {
+  border-color: rgba(var(--color-accent-rgb), 0.45);
+  box-shadow: var(--shadow-md);
+}
+
+.roadmap-step.is-completed .roadmap-step-card {
+  background: var(--color-surface-muted);
+  box-shadow: none;
+}
+
+.roadmap-step.is-muted .roadmap-step-card {
+  background: transparent;
+  box-shadow: none;
+  border-style: dashed;
+}
+
+.roadmap-step.is-muted {
+  opacity: 0.7;
+}
+
+.roadmap-step.is-next .roadmap-step-marker {
+  border-style: dashed;
+  color: var(--color-text-muted);
+}
+
+.roadmap-step.is-next .roadmap-step-card {
+  background: transparent;
+  box-shadow: none;
+}
+
+.roadmap-section-label {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  margin: 1.5rem 0 0.75rem;
+}
+
+.roadmap-section-label:first-child {
+  margin-top: 0;
+}
+
+/* -------------------------------------------------------------------- */
+/* Course / project cards                                                */
+/* -------------------------------------------------------------------- */
+
+.course-card {
+  border-left: 3px solid var(--color-accent);
+}
+
+.course-card.status-completed {
+  border-left-color: var(--color-success);
+}
+
+.course-card.status-paused,
+.course-card.status-dropped {
+  border-left-color: var(--color-border);
+  opacity: 0.85;
+}
+
+.project-card {
+  border-left: 3px solid var(--sidebar-accent);
+  background: linear-gradient(180deg, #ffffff 0%, #fbfaff 100%);
+}
+
+/* -------------------------------------------------------------------- */
+/* Empty states                                                          */
+/* -------------------------------------------------------------------- */
+
+.empty-state {
+  text-align: center;
+  padding: 2rem 1.25rem;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-muted);
+  background: var(--color-surface-muted);
+}
+
+.empty-state.empty-state-inline {
+  text-align: left;
+  padding: 1rem 1.15rem;
+}
+
+.empty-state .empty-state-icon {
+  font-size: 1.5rem;
+  margin-bottom: 0.35rem;
+  display: block;
+}
+
+/* -------------------------------------------------------------------- */
+/* Forms                                                                 */
+/* -------------------------------------------------------------------- */
+
+.form-card {
+  max-width: 720px;
+}
+
+.form-section + .form-section {
+  margin-top: 1.75rem;
+  padding-top: 1.75rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.form-section-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+  margin-bottom: 0.9rem;
 }
