@@ -1,9 +1,19 @@
 # This file should ensure the existence of records required to run the application in every environment.
 # It is safe to rerun: existing records are found and reused rather than duplicated.
 
-puts "Seeding default settings..."
-unless AppSetting.exists?
-  AppSetting.create!(default_daily_goal: "Study or practice at least one learning topic today.")
+puts "Seeding default checklist items..."
+default_goal_item_texts = [
+  "Study or practice at least one learning topic",
+  "Practice Python",
+  "Practice DSA",
+  "Work on a personal project"
+]
+
+default_goal_item_texts.each_with_index do |text, index|
+  DefaultGoalItem.find_or_create_by!(text: text) do |item|
+    item.position = index + 1
+    item.active = true
+  end
 end
 
 puts "Seeding degree..."
@@ -259,21 +269,25 @@ end
 
 puts "Seeding daily goals..."
 daily_goal_history = [
-  { days_ago: 7, status: "met", goal_text: "Study or practice at least one learning topic today." },
-  { days_ago: 6, status: "met", goal_text: "Study or practice at least one learning topic today." },
-  { days_ago: 5, status: "not_met", goal_text: "Study or practice at least one learning topic today." },
-  { days_ago: 4, status: "met", goal_text: "Study or practice at least one learning topic today." },
-  { days_ago: 3, status: "met", goal_text: "Study or practice at least one learning topic today." },
-  { days_ago: 2, status: "met", goal_text: "Study or practice at least one learning topic today." },
-  { days_ago: 1, status: "met", goal_text: "Study or practice at least one learning topic today." }
+  { days_ago: 7, completed: true },
+  { days_ago: 6, completed: true },
+  { days_ago: 5, completed: false },
+  { days_ago: 4, completed: true },
+  { days_ago: 3, completed: true },
+  { days_ago: 2, completed: true },
+  { days_ago: 1, completed: true }
 ]
 
 daily_goal_history.each do |attrs|
   date = Date.current - attrs[:days_ago].days
-  DailyGoal.find_or_create_by!(date: date) do |goal|
-    goal.goal_text = attrs[:goal_text]
-    goal.status = attrs[:status]
-  end
+  next if DailyGoal.exists?(date: date)
+
+  goal = DailyGoal.create!(date: date)
+  goal.daily_goal_items.create!(
+    text: "Study or practice at least one learning topic",
+    position: 1,
+    completed: attrs[:completed]
+  )
 end
 
 puts "Seed data ready."

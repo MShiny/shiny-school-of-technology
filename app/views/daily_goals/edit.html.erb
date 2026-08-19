@@ -1,6 +1,6 @@
 <% content_for :title, "Edit Daily Goal - #{@daily_goal.date.strftime('%b %-d, %Y')}" %>
 
-<h1 class="h3 mb-3">Edit Daily Goal</h1>
+<h1 class="h3 mb-3">Edit Daily Goal Notes</h1>
 <p class="text-muted"><%= @daily_goal.date.strftime("%A, %B %-d, %Y") %></p>
 
 <%= form_with model: @daily_goal, class: "vstack gap-3" do |form| %>
@@ -16,18 +16,9 @@
   <% end %>
 
   <div>
-    <%= form.label :goal_text, "Goal", class: "form-label" %>
-    <%= form.text_area :goal_text, class: "form-control", rows: 3 %>
-  </div>
-
-  <div>
-    <%= form.label :status, class: "form-label" %>
-    <%= form.select :status, DailyGoal.statuses.keys.map { |s| [ s.humanize, s ] }, {}, class: "form-select" %>
-  </div>
-
-  <div>
     <%= form.label :notes, class: "form-label" %>
-    <%= form.text_area :notes, class: "form-control", rows: 2 %>
+    <%= form.text_area :notes, class: "form-control", rows: 3 %>
+    <div class="form-text">Checklist items can be edited directly from today's checklist.</div>
   </div>
 
   <div>

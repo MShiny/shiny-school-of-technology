@@ -1,8 +1,8 @@
 class DailyGoalsController < ApplicationController
-  before_action :set_daily_goal, only: %i[ show edit update mark_met mark_not_met reset ]
+  before_action :set_daily_goal, only: %i[ show edit update ]
 
   def index
-    @daily_goals = DailyGoal.recent
+    @daily_goals = DailyGoal.includes(:daily_goal_items).recent
   end
 
   def show
@@ -19,21 +19,6 @@ class DailyGoalsController < ApplicationController
     end
   end
 
-  def mark_met
-    @daily_goal.update!(status: "met")
-    redirect_back fallback_location: daily_goal_path(@daily_goal), notice: "Marked as met."
-  end
-
-  def mark_not_met
-    @daily_goal.update!(status: "not_met")
-    redirect_back fallback_location: daily_goal_path(@daily_goal), notice: "Marked as not met."
-  end
-
-  def reset
-    @daily_goal.update!(status: "pending")
-    redirect_back fallback_location: daily_goal_path(@daily_goal), notice: "Reset to pending."
-  end
-
   private
 
   def set_daily_goal
@@ -41,6 +26,6 @@ class DailyGoalsController < ApplicationController
   end
 
   def daily_goal_params
-    params.require(:daily_goal).permit(:goal_text, :status, :notes)
+    params.require(:daily_goal).permit(:notes)
   end
 end

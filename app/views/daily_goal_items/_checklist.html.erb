@@ -1,0 +1,46 @@
+<%
+editable = local_assigns.fetch(:editable, false)
+items = daily_goal.daily_goal_items.to_a
+total = items.size
+completed = items.count(&:completed?)
+percentage = total.zero? ? 0 : ((completed.to_f / total) * 100).round
+%>
+
+<div class="checklist">
+  <% if items.any? %>
+    <div class="list-group mb-2">
+      <% items.each do |item| %>
+        <div class="list-group-item d-flex align-items-center gap-2 <%= "text-decoration-line-through text-muted" if item.completed? %>">
+          <% if editable %>
+            <%= button_to toggle_daily_goal_item_path(item), method: :patch, class: "btn btn-sm #{item.completed? ? 'btn-success' : 'btn-outline-secondary'}", form: { class: "mb-0" } do %>
+              <%= item.completed? ? "☑" : "☐" %>
+            <% end %>
+            <%= form_with model: item, url: daily_goal_item_path(item), method: :patch, class: "flex-grow-1 d-flex gap-1 mb-0" do |f| %>
+              <%= f.text_field :text, class: "form-control form-control-sm", "aria-label": "Item text" %>
+              <%= f.submit "Save", class: "btn btn-sm btn-outline-primary" %>
+            <% end %>
+            <%= button_to "✕", daily_goal_item_path(item), method: :delete, class: "btn btn-sm btn-outline-danger", form: { class: "mb-0", data: { turbo_confirm: "Remove this item?" } } %>
+          <% else %>
+            <span><%= item.completed? ? "☑" : "☐" %></span>
+            <span class="flex-grow-1"><%= item.text %></span>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="progress mb-1" style="height: 8px;">
+      <div class="progress-bar bg-success" role="progressbar" style="width: <%= percentage %>%;" aria-valuenow="<%= percentage %>" aria-valuemin="0" aria-valuemax="100"></div>
+    </div>
+    <p class="small text-muted mb-2"><%= completed %> / <%= total %> completed</p>
+  <% else %>
+    <p class="text-muted small mb-2">No checklist items for this day.</p>
+  <% end %>
+
+  <% if editable %>
+    <%= form_with url: daily_goal_items_path, method: :post, class: "d-flex gap-1" do %>
+      <%= hidden_field_tag "daily_goal_item[daily_goal_id]", daily_goal.id %>
+      <%= text_field_tag "daily_goal_item[text]", nil, class: "form-control form-control-sm", placeholder: "Add an item for today...", required: true %>
+      <%= submit_tag "Add", class: "btn btn-sm btn-primary" %>
+    <% end %>
+  <% end %>
+</div>

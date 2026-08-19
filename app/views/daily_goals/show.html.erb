@@ -5,22 +5,16 @@
     <h1 class="h3 mb-1"><%= @daily_goal.date.strftime("%A, %B %-d, %Y") %></h1>
     <%= status_badge(@daily_goal.status) %>
   </div>
-  <%= link_to "Edit", edit_daily_goal_path(@daily_goal), class: "btn btn-outline-secondary" %>
+  <%= link_to "Edit Notes", edit_daily_goal_path(@daily_goal), class: "btn btn-outline-secondary" %>
 </div>
 
-<p class="lead"><%= @daily_goal.goal_text %></p>
+<%= render "daily_goal_items/checklist", daily_goal: @daily_goal, editable: @daily_goal.date == Date.current %>
 
 <% if @daily_goal.notes.present? %>
-  <div class="alert alert-light border">
+  <div class="alert alert-light border mt-3">
     <strong>Notes:</strong> <%= @daily_goal.notes %>
   </div>
 <% end %>
-
-<div class="d-flex gap-2 mt-3">
-  <%= button_to "Mark Met", mark_met_daily_goal_path(@daily_goal), method: :patch, class: "btn btn-success" %>
-  <%= button_to "Mark Not Met", mark_not_met_daily_goal_path(@daily_goal), method: :patch, class: "btn btn-danger" %>
-  <%= button_to "Reset to Pending", reset_daily_goal_path(@daily_goal), method: :patch, class: "btn btn-outline-secondary" %>
-</div>
 
 <p class="mt-4">
   <%= link_to "← Back to Daily Goals", daily_goals_path, class: "btn btn-link ps-0" %>

@@ -10,15 +10,9 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_08_18_163510) do
+ActiveRecord::Schema[8.0].define(version: 2026_08_19_081648) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
-
-  create_table "app_settings", force: :cascade do |t|
-    t.text "default_daily_goal", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-  end
 
   create_table "courses", force: :cascade do |t|
     t.bigint "subject_id", null: false
@@ -37,14 +31,32 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_18_163510) do
     t.index ["subject_id"], name: "index_courses_on_subject_id"
   end
 
+  create_table "daily_goal_items", force: :cascade do |t|
+    t.bigint "daily_goal_id", null: false
+    t.string "text", null: false
+    t.integer "position", default: 0, null: false
+    t.boolean "completed", default: false, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["daily_goal_id", "position"], name: "index_daily_goal_items_on_daily_goal_id_and_position"
+    t.index ["daily_goal_id"], name: "index_daily_goal_items_on_daily_goal_id"
+  end
+
   create_table "daily_goals", force: :cascade do |t|
     t.date "date", null: false
-    t.text "goal_text"
-    t.string "status", default: "pending", null: false
     t.text "notes"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["date"], name: "index_daily_goals_on_date", unique: true
+  end
+
+  create_table "default_goal_items", force: :cascade do |t|
+    t.string "text", null: false
+    t.integer "position", null: false
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["active", "position"], name: "index_default_goal_items_on_active_and_position"
   end
 
   create_table "degree_subjects", force: :cascade do |t|
@@ -99,6 +111,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_18_163510) do
   end
 
   add_foreign_key "courses", "subjects"
+  add_foreign_key "daily_goal_items", "daily_goals"
   add_foreign_key "degree_subjects", "degrees"
   add_foreign_key "degree_subjects", "subjects"
   add_foreign_key "personal_project_subjects", "personal_projects"

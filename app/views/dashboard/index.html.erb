@@ -2,20 +2,20 @@
 
 <div class="card todays-goal-card mb-4">
   <div class="card-body p-4">
-    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
       <div>
         <p class="text-muted mb-1 small text-uppercase fw-semibold">Today · <%= @todays_goal.date.strftime("%A, %B %-d, %Y") %></p>
-        <h1 class="h3 mb-2">🎯 <%= @todays_goal.goal_text %></h1>
+        <h1 class="h3 mb-2">🎯 Today's Checklist</h1>
         <%= status_badge(@todays_goal.status) %>
       </div>
+      <%= link_to "Edit notes", edit_daily_goal_path(@todays_goal), class: "btn btn-outline-secondary btn-sm" %>
     </div>
 
-    <div class="d-flex flex-wrap gap-2 mt-3">
-      <%= link_to "Edit", edit_daily_goal_path(@todays_goal), class: "btn btn-outline-secondary btn-sm" %>
-      <%= button_to "Mark Met", mark_met_daily_goal_path(@todays_goal), method: :patch, class: "btn btn-success btn-sm" %>
-      <%= button_to "Mark Not Met", mark_not_met_daily_goal_path(@todays_goal), method: :patch, class: "btn btn-danger btn-sm" %>
-      <%= button_to "Reset to Pending", reset_daily_goal_path(@todays_goal), method: :patch, class: "btn btn-outline-secondary btn-sm" %>
-    </div>
+    <%= render "daily_goal_items/checklist", daily_goal: @todays_goal, editable: true %>
+
+    <p class="mb-0 mt-2">
+      <%= link_to "View full day →", daily_goal_path(@todays_goal), class: "small" %>
+    </p>
   </div>
 </div>
 
@@ -49,6 +49,14 @@
       <div class="card-body">
         <div class="stat-value text-warning"><span class="streak-flame">🔥</span> <%= @current_streak %></div>
         <div class="text-muted small">Current streak</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card stat-card h-100">
+      <div class="card-body">
+        <div class="stat-value text-info"><%= @monthly_stats[:completed_items] %> / <%= @monthly_stats[:total_items] %></div>
+        <div class="text-muted small">Checklist items this month (<%= @monthly_stats[:item_completion_percentage] %>%)</div>
       </div>
     </div>
   </div>
@@ -123,7 +131,7 @@
         <%= link_to daily_goal_path(goal), class: "list-group-item list-group-item-action d-flex justify-content-between align-items-center" do %>
           <span>
             <strong><%= goal.date.strftime("%b %-d") %></strong>
-            <span class="text-muted ms-2"><%= truncate(goal.goal_text, length: 50) %></span>
+            <span class="text-muted ms-2"><%= goal.items_completed_count %> / <%= goal.items_total %> completed</span>
           </span>
           <%= status_badge(goal.status) %>
         <% end %>

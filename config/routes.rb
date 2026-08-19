@@ -16,13 +16,17 @@ Rails.application.routes.draw do
   resources :courses
   resources :personal_projects
 
-  resources :daily_goals, only: [ :index, :show, :edit, :update ] do
+  resources :daily_goals, only: [ :index, :show, :edit, :update ]
+
+  resources :daily_goal_items, only: [ :create, :update, :destroy ] do
     member do
-      patch :mark_met
-      patch :mark_not_met
-      patch :reset
+      patch :toggle
     end
   end
 
-  resource :settings, only: [ :edit, :update ]
+  resources :default_goal_items, except: [ :show ] do
+    member do
+      patch :toggle_active
+    end
+  end
 end

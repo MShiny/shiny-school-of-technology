@@ -6,16 +6,16 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
-  test "visiting the dashboard creates today's goal from the default when missing" do
-    AppSetting.instance.update!(default_daily_goal: "Practice today.")
+  test "visiting the dashboard creates today's checklist from active defaults when missing" do
+    DefaultGoalItem.create!(text: "Practice today.", position: 1, active: true)
+    DefaultGoalItem.create!(text: "Retired item", position: 2, active: false)
 
     assert_difference("DailyGoal.count", 1) do
       get root_url
     end
 
     goal = DailyGoal.find_by(date: Date.current)
-    assert_equal "Practice today.", goal.goal_text
-    assert_equal "pending", goal.status
+    assert_equal [ "Practice today." ], goal.daily_goal_items.map(&:text)
   end
 
   test "visiting the dashboard again does not create a second goal for today" do
@@ -24,6 +24,19 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     assert_no_difference("DailyGoal.count") do
       get root_url
     end
+  end
+
+  test "dashboard shows today's checklist card with progress" do
+    goal = DailyGoal.find_or_create_today!
+    goal.daily_goal_items.create!(text: "Study ML", position: 1, completed: true)
+    goal.daily_goal_items.create!(text: "DSA practice", position: 2, completed: false)
+
+    get root_url
+
+    assert_match "Today's Checklist", response.body
+    assert_match "Study ML", response.body
+    assert_match "DSA practice", response.body
+    assert_match "1 / 2 completed", response.body
   end
 
   test "dashboard shows active degrees and in-progress courses" do

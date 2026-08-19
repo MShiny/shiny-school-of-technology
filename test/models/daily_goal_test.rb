@@ -2,163 +2,299 @@ require "test_helper"
 
 class DailyGoalTest < ActiveSupport::TestCase
   test "is invalid without a date" do
-    goal = DailyGoal.new(goal_text: "Study")
+    goal = DailyGoal.new
     assert_not goal.valid?
     assert_includes goal.errors[:date], "can't be blank"
   end
 
-  test "defaults to pending status" do
-    goal = DailyGoal.create!(date: Date.current, goal_text: "Study")
-    assert_equal "pending", goal.status
-  end
-
   test "enforces one goal per calendar date via validation" do
-    DailyGoal.create!(date: Date.current, goal_text: "Study")
-    duplicate = DailyGoal.new(date: Date.current, goal_text: "Study more")
+    DailyGoal.create!(date: Date.current)
+    duplicate = DailyGoal.new(date: Date.current)
 
     assert_not duplicate.valid?
     assert_includes duplicate.errors[:date], "has already been taken"
   end
 
   test "enforces one goal per calendar date at the database level" do
-    DailyGoal.create!(date: Date.current, goal_text: "Study")
+    DailyGoal.create!(date: Date.current)
 
     assert_raises(ActiveRecord::RecordNotUnique) do
-      DailyGoal.insert!({ date: Date.current, goal_text: "Study more", status: "pending" })
+      DailyGoal.insert!({ date: Date.current })
     end
   end
 
-  test "find_or_create_today! creates a goal copied from the current default" do
-    AppSetting.instance.update!(default_daily_goal: "Read one chapter today.")
+  test "destroying a daily goal destroys its items" do
+    goal = DailyGoal.create!(date: Date.current)
+    goal.daily_goal_items.create!(text: "Study", position: 1)
+
+    assert_difference("DailyGoalItem.count", -1) do
+      goal.destroy
+    end
+  end
+
+  # --- find_or_create_today! / default item snapshotting ---
+
+  test "find_or_create_today! copies all currently active default items into today's checklist" do
+    DefaultGoalItem.create!(text: "Study Python", position: 1, active: true)
+    DefaultGoalItem.create!(text: "Practice DSA", position: 2, active: true)
+    DefaultGoalItem.create!(text: "Retired item", position: 3, active: false)
 
     goal = DailyGoal.find_or_create_today!
 
     assert_equal Date.current, goal.date
-    assert_equal "Read one chapter today.", goal.goal_text
-    assert_equal "pending", goal.status
+    assert_equal [ "Study Python", "Practice DSA" ], goal.daily_goal_items.ordered.map(&:text)
+    assert goal.daily_goal_items.none?(&:completed?)
   end
 
   test "find_or_create_today! does not duplicate or reset an existing goal for today" do
-    existing = DailyGoal.create!(date: Date.current, goal_text: "Custom text", status: "met")
+    existing = DailyGoal.create!(date: Date.current)
+    existing.daily_goal_items.create!(text: "Custom item", position: 1, completed: true)
 
     found = DailyGoal.find_or_create_today!
 
     assert_equal existing.id, found.id
-    assert_equal "Custom text", found.goal_text
-    assert_equal "met", found.status
+    assert_equal [ "Custom item" ], found.daily_goal_items.map(&:text)
   end
 
-  test "editing today's goal does not change the default setting" do
-    AppSetting.instance.update!(default_daily_goal: "Original default")
+  test "snapshot is independent: changing defaults later does not alter an existing day's checklist" do
+    DefaultGoalItem.create!(text: "Original default", position: 1)
     goal = DailyGoal.find_or_create_today!
 
-    goal.update!(goal_text: "Something completely different")
+    DefaultGoalItem.create!(text: "A brand new default", position: 2)
+    DefaultGoalItem.first.update!(text: "Edited default text")
 
-    assert_equal "Original default", AppSetting.instance.reload.default_daily_goal
+    goal.reload
+    assert_equal [ "Original default" ], goal.daily_goal_items.map(&:text)
   end
 
-  test "changing the default later does not alter existing daily goals" do
-    AppSetting.instance.update!(default_daily_goal: "Original default")
+  test "customizing today's checklist does not modify the default template" do
+    DefaultGoalItem.create!(text: "Study Python", position: 1)
     goal = DailyGoal.find_or_create_today!
 
-    AppSetting.instance.update!(default_daily_goal: "A brand new default")
+    goal.daily_goal_items.create!(text: "Extra item added today", position: 2)
+    goal.daily_goal_items.first.update!(completed: true)
 
-    assert_equal "Original default", goal.reload.goal_text
+    default = DefaultGoalItem.find_by(text: "Study Python")
+    assert_equal "Study Python", default.text
+    assert_equal 1, DefaultGoalItem.count
   end
 
-  test "current_streak counts consecutive met days ending today when today is met" do
+  # --- status derivation ---
+
+  test "status is met when every item is completed" do
+    goal = DailyGoal.create!(date: Date.current)
+    goal.daily_goal_items.create!(text: "A", position: 1, completed: true)
+    goal.daily_goal_items.create!(text: "B", position: 2, completed: true)
+
+    assert_equal "met", goal.status
+    assert goal.fully_completed?
+  end
+
+  test "status is partial when some but not all items are completed" do
+    goal = DailyGoal.create!(date: Date.current)
+    goal.daily_goal_items.create!(text: "A", position: 1, completed: true)
+    goal.daily_goal_items.create!(text: "B", position: 2, completed: false)
+
+    assert_equal "partial", goal.status
+    assert_not goal.fully_completed?
+  end
+
+  test "status is pending when today has zero completed items" do
+    goal = DailyGoal.create!(date: Date.current)
+    goal.daily_goal_items.create!(text: "A", position: 1, completed: false)
+
+    assert_equal "pending", goal.status
+  end
+
+  test "status is pending when today has no items at all" do
+    goal = DailyGoal.create!(date: Date.current)
+
+    assert_equal "pending", goal.status
+  end
+
+  test "status is not_met when a historical day has zero completed items" do
+    goal = DailyGoal.create!(date: Date.current - 3.days)
+    goal.daily_goal_items.create!(text: "A", position: 1, completed: false)
+
+    assert_equal "not_met", goal.status
+  end
+
+  test "status is not_met when a historical day has no items at all" do
+    goal = DailyGoal.create!(date: Date.current - 3.days)
+
+    assert_equal "not_met", goal.status
+  end
+
+  test "a historical day with partial completion still shows partial, not not_met" do
+    goal = DailyGoal.create!(date: Date.current - 1.day)
+    goal.daily_goal_items.create!(text: "A", position: 1, completed: true)
+    goal.daily_goal_items.create!(text: "B", position: 2, completed: false)
+
+    assert_equal "partial", goal.status
+  end
+
+  test "items_total and items_completed_count reflect the checklist" do
+    goal = DailyGoal.create!(date: Date.current)
+    goal.daily_goal_items.create!(text: "A", position: 1, completed: true)
+    goal.daily_goal_items.create!(text: "B", position: 2, completed: false)
+    goal.daily_goal_items.create!(text: "C", position: 3, completed: true)
+
+    assert_equal 3, goal.items_total
+    assert_equal 2, goal.items_completed_count
+  end
+
+  # --- current_streak ---
+
+  test "current_streak counts consecutive fully-completed days ending today when today is fully completed" do
     today = Date.current
-    DailyGoal.create!(date: today, status: "met", goal_text: "Study")
-    DailyGoal.create!(date: today - 1.day, status: "met", goal_text: "Study")
-    DailyGoal.create!(date: today - 2.days, status: "met", goal_text: "Study")
-    DailyGoal.create!(date: today - 3.days, status: "not_met", goal_text: "Study")
+    [ today, today - 1.day, today - 2.days ].each do |date|
+      goal = DailyGoal.create!(date: date)
+      goal.daily_goal_items.create!(text: "Study", position: 1, completed: true)
+    end
+    broken = DailyGoal.create!(date: today - 3.days)
+    broken.daily_goal_items.create!(text: "Study", position: 1, completed: false)
 
     assert_equal 3, DailyGoal.current_streak(as_of: today)
   end
 
   test "current_streak stops at a missing date" do
     today = Date.current
-    DailyGoal.create!(date: today, status: "met", goal_text: "Study")
+    goal = DailyGoal.create!(date: today)
+    goal.daily_goal_items.create!(text: "Study", position: 1, completed: true)
     # today - 1.day intentionally missing
-    DailyGoal.create!(date: today - 2.days, status: "met", goal_text: "Study")
+    older = DailyGoal.create!(date: today - 2.days)
+    older.daily_goal_items.create!(text: "Study", position: 1, completed: true)
 
     assert_equal 1, DailyGoal.current_streak(as_of: today)
   end
 
-  test "current_streak counts from yesterday when today is pending, instead of zeroing out" do
+  test "today's incomplete checklist (zero done) does not break the previous streak" do
     today = Date.current
-    DailyGoal.create!(date: today, status: "pending", goal_text: "Study")
-    DailyGoal.create!(date: today - 1.day, status: "met", goal_text: "Study")
-    DailyGoal.create!(date: today - 2.days, status: "met", goal_text: "Study")
-    DailyGoal.create!(date: today - 3.days, status: "met", goal_text: "Study")
-    DailyGoal.create!(date: today - 4.days, status: "met", goal_text: "Study")
+    pending_today = DailyGoal.create!(date: today)
+    pending_today.daily_goal_items.create!(text: "Study", position: 1, completed: false)
+
+    [ today - 1.day, today - 2.days, today - 3.days, today - 4.days ].each do |date|
+      goal = DailyGoal.create!(date: date)
+      goal.daily_goal_items.create!(text: "Study", position: 1, completed: true)
+    end
 
     assert_equal 4, DailyGoal.current_streak(as_of: today)
   end
 
-  test "current_streak treats a missing today the same as pending" do
+  test "today's partial checklist does not break the previous streak" do
+    today = Date.current
+    partial_today = DailyGoal.create!(date: today)
+    partial_today.daily_goal_items.create!(text: "A", position: 1, completed: true)
+    partial_today.daily_goal_items.create!(text: "B", position: 2, completed: false)
+
+    yesterday = DailyGoal.create!(date: today - 1.day)
+    yesterday.daily_goal_items.create!(text: "Study", position: 1, completed: true)
+
+    assert_equal 1, DailyGoal.current_streak(as_of: today)
+  end
+
+  test "current_streak treats a missing today the same as an incomplete today" do
     today = Date.current
     # no record for today at all
-    DailyGoal.create!(date: today - 1.day, status: "met", goal_text: "Study")
-    DailyGoal.create!(date: today - 2.days, status: "met", goal_text: "Study")
+    [ today - 1.day, today - 2.days ].each do |date|
+      goal = DailyGoal.create!(date: date)
+      goal.daily_goal_items.create!(text: "Study", position: 1, completed: true)
+    end
 
     assert_equal 2, DailyGoal.current_streak(as_of: today)
   end
 
-  test "current_streak is zero when today is not_met, even with a prior streak" do
+  test "a historical not_met day breaks the streak going forward from it" do
     today = Date.current
-    DailyGoal.create!(date: today, status: "not_met", goal_text: "Study")
-    DailyGoal.create!(date: today - 1.day, status: "met", goal_text: "Study")
-    DailyGoal.create!(date: today - 2.days, status: "met", goal_text: "Study")
+    goal = DailyGoal.create!(date: today)
+    goal.daily_goal_items.create!(text: "Study", position: 1, completed: true)
 
-    assert_equal 0, DailyGoal.current_streak(as_of: today)
+    failed = DailyGoal.create!(date: today - 1.day)
+    failed.daily_goal_items.create!(text: "Study", position: 1, completed: false)
+
+    older = DailyGoal.create!(date: today - 2.days)
+    older.daily_goal_items.create!(text: "Study", position: 1, completed: true)
+
+    assert_equal 1, DailyGoal.current_streak(as_of: today)
   end
 
-  test "monthly_stats computes totals and completion percentage from resolved goals only" do
-    reference_date = Date.current.beginning_of_month + 5.days
+  # --- monthly_stats ---
+  #
+  # These are pinned to a fixed "today" via travel_to so the reference dates
+  # (early in the month) are always historical, regardless of which day of
+  # the real calendar month the suite happens to run on.
 
-    DailyGoal.create!(date: reference_date, status: "met", goal_text: "Study")
-    DailyGoal.create!(date: reference_date + 1.day, status: "met", goal_text: "Study")
-    DailyGoal.create!(date: reference_date + 2.days, status: "not_met", goal_text: "Study")
-    DailyGoal.create!(date: reference_date + 3.days, status: "pending", goal_text: "Study")
+  test "monthly_stats computes day-level counts and completion percentage from resolved days only" do
+    travel_to Date.new(2026, 6, 20) do
+      reference_date = Date.current.beginning_of_month + 5.days
 
-    stats = DailyGoal.monthly_stats(reference_date: reference_date)
+      met = DailyGoal.create!(date: reference_date)
+      met.daily_goal_items.create!(text: "A", position: 1, completed: true)
 
-    assert_equal 2, stats[:met]
-    assert_equal 1, stats[:not_met]
-    assert_equal 1, stats[:pending]
-    assert_equal 4, stats[:total]
-    assert_equal 3, stats[:resolved]
-    # 2 met / 3 resolved = 67%, pending is excluded from the denominator.
-    assert_equal 67, stats[:completion_percentage]
+      also_met = DailyGoal.create!(date: reference_date + 1.day)
+      also_met.daily_goal_items.create!(text: "A", position: 1, completed: true)
+
+      not_met = DailyGoal.create!(date: reference_date + 2.days)
+      not_met.daily_goal_items.create!(text: "A", position: 1, completed: false)
+
+      stats = DailyGoal.monthly_stats(reference_date: reference_date)
+
+      assert_equal 2, stats[:met]
+      assert_equal 1, stats[:not_met]
+      assert_equal 3, stats[:total]
+      assert_equal 3, stats[:resolved]
+      assert_equal 67, stats[:completion_percentage]
+    end
   end
 
-  test "monthly_stats excludes pending goals from the completion percentage denominator" do
-    reference_date = Date.current.beginning_of_month + 10.days
+  test "monthly_stats reports partial days separately from met and not_met" do
+    travel_to Date.new(2026, 6, 20) do
+      reference_date = Date.current.beginning_of_month + 5.days
 
-    6.times { |i| DailyGoal.create!(date: reference_date + i.days, status: "met", goal_text: "Study") }
-    DailyGoal.create!(date: reference_date + 6.days, status: "not_met", goal_text: "Study")
-    DailyGoal.create!(date: reference_date + 7.days, status: "pending", goal_text: "Study")
+      partial = DailyGoal.create!(date: reference_date)
+      partial.daily_goal_items.create!(text: "A", position: 1, completed: true)
+      partial.daily_goal_items.create!(text: "B", position: 2, completed: false)
 
-    stats = DailyGoal.monthly_stats(reference_date: reference_date)
+      stats = DailyGoal.monthly_stats(reference_date: reference_date)
 
-    assert_equal 6, stats[:met]
-    assert_equal 7, stats[:resolved]
-    assert_equal 8, stats[:total]
-    # 6 / 7 rounds to 86%, not 6 / 8 = 75%.
-    assert_equal 86, stats[:completion_percentage]
+      assert_equal 1, stats[:partial]
+      assert_equal 0, stats[:met]
+      assert_equal 1, stats[:resolved]
+      assert_equal 0, stats[:completion_percentage]
+    end
   end
 
-  test "monthly_stats handles zero resolved goals safely" do
-    reference_date = Date.current.beginning_of_month + 2.days
-    DailyGoal.create!(date: reference_date, status: "pending", goal_text: "Study")
+  test "monthly_stats computes item-level completion across all checklist items in the month" do
+    travel_to Date.new(2026, 6, 20) do
+      reference_date = Date.current.beginning_of_month + 5.days
 
-    stats = DailyGoal.monthly_stats(reference_date: reference_date)
+      day_one = DailyGoal.create!(date: reference_date)
+      day_one.daily_goal_items.create!(text: "A", position: 1, completed: true)
+      day_one.daily_goal_items.create!(text: "B", position: 2, completed: true)
+      day_one.daily_goal_items.create!(text: "C", position: 3, completed: false)
 
-    assert_equal 0, stats[:met]
-    assert_equal 0, stats[:resolved]
-    assert_equal 1, stats[:pending]
-    assert_equal 0, stats[:completion_percentage]
+      day_two = DailyGoal.create!(date: reference_date + 1.day)
+      day_two.daily_goal_items.create!(text: "A", position: 1, completed: true)
+
+      stats = DailyGoal.monthly_stats(reference_date: reference_date)
+
+      assert_equal 4, stats[:total_items]
+      assert_equal 3, stats[:completed_items]
+      assert_equal 75, stats[:item_completion_percentage]
+    end
+  end
+
+  test "monthly_stats handles a day with zero items safely" do
+    travel_to Date.new(2026, 6, 20) do
+      reference_date = Date.current.beginning_of_month + 2.days
+      DailyGoal.create!(date: reference_date)
+
+      stats = DailyGoal.monthly_stats(reference_date: reference_date)
+
+      assert_equal 0, stats[:total_items]
+      assert_equal 0, stats[:completed_items]
+      assert_equal 0, stats[:item_completion_percentage]
+    end
   end
 
   test "monthly_stats handles no goals in the month safely" do
@@ -168,6 +304,8 @@ class DailyGoalTest < ActiveSupport::TestCase
 
     assert_equal 0, stats[:total]
     assert_equal 0, stats[:resolved]
+    assert_equal 0, stats[:total_items]
     assert_equal 0, stats[:completion_percentage]
+    assert_equal 0, stats[:item_completion_percentage]
   end
 end
