@@ -66,7 +66,7 @@ class DailyGoalTest < ActiveSupport::TestCase
     assert_equal "Original default", goal.reload.goal_text
   end
 
-  test "current_streak counts consecutive met days ending today" do
+  test "current_streak counts consecutive met days ending today when today is met" do
     today = Date.current
     DailyGoal.create!(date: today, status: "met", goal_text: "Study")
     DailyGoal.create!(date: today - 1.day, status: "met", goal_text: "Study")
@@ -85,15 +85,36 @@ class DailyGoalTest < ActiveSupport::TestCase
     assert_equal 1, DailyGoal.current_streak(as_of: today)
   end
 
-  test "current_streak is zero when the most recent date is not met" do
+  test "current_streak counts from yesterday when today is pending, instead of zeroing out" do
     today = Date.current
     DailyGoal.create!(date: today, status: "pending", goal_text: "Study")
     DailyGoal.create!(date: today - 1.day, status: "met", goal_text: "Study")
+    DailyGoal.create!(date: today - 2.days, status: "met", goal_text: "Study")
+    DailyGoal.create!(date: today - 3.days, status: "met", goal_text: "Study")
+    DailyGoal.create!(date: today - 4.days, status: "met", goal_text: "Study")
+
+    assert_equal 4, DailyGoal.current_streak(as_of: today)
+  end
+
+  test "current_streak treats a missing today the same as pending" do
+    today = Date.current
+    # no record for today at all
+    DailyGoal.create!(date: today - 1.day, status: "met", goal_text: "Study")
+    DailyGoal.create!(date: today - 2.days, status: "met", goal_text: "Study")
+
+    assert_equal 2, DailyGoal.current_streak(as_of: today)
+  end
+
+  test "current_streak is zero when today is not_met, even with a prior streak" do
+    today = Date.current
+    DailyGoal.create!(date: today, status: "not_met", goal_text: "Study")
+    DailyGoal.create!(date: today - 1.day, status: "met", goal_text: "Study")
+    DailyGoal.create!(date: today - 2.days, status: "met", goal_text: "Study")
 
     assert_equal 0, DailyGoal.current_streak(as_of: today)
   end
 
-  test "monthly_stats computes totals and completion percentage" do
+  test "monthly_stats computes totals and completion percentage from resolved goals only" do
     reference_date = Date.current.beginning_of_month + 5.days
 
     DailyGoal.create!(date: reference_date, status: "met", goal_text: "Study")
@@ -104,7 +125,49 @@ class DailyGoalTest < ActiveSupport::TestCase
     stats = DailyGoal.monthly_stats(reference_date: reference_date)
 
     assert_equal 2, stats[:met]
+    assert_equal 1, stats[:not_met]
+    assert_equal 1, stats[:pending]
     assert_equal 4, stats[:total]
-    assert_equal 50, stats[:completion_percentage]
+    assert_equal 3, stats[:resolved]
+    # 2 met / 3 resolved = 67%, pending is excluded from the denominator.
+    assert_equal 67, stats[:completion_percentage]
+  end
+
+  test "monthly_stats excludes pending goals from the completion percentage denominator" do
+    reference_date = Date.current.beginning_of_month + 10.days
+
+    6.times { |i| DailyGoal.create!(date: reference_date + i.days, status: "met", goal_text: "Study") }
+    DailyGoal.create!(date: reference_date + 6.days, status: "not_met", goal_text: "Study")
+    DailyGoal.create!(date: reference_date + 7.days, status: "pending", goal_text: "Study")
+
+    stats = DailyGoal.monthly_stats(reference_date: reference_date)
+
+    assert_equal 6, stats[:met]
+    assert_equal 7, stats[:resolved]
+    assert_equal 8, stats[:total]
+    # 6 / 7 rounds to 86%, not 6 / 8 = 75%.
+    assert_equal 86, stats[:completion_percentage]
+  end
+
+  test "monthly_stats handles zero resolved goals safely" do
+    reference_date = Date.current.beginning_of_month + 2.days
+    DailyGoal.create!(date: reference_date, status: "pending", goal_text: "Study")
+
+    stats = DailyGoal.monthly_stats(reference_date: reference_date)
+
+    assert_equal 0, stats[:met]
+    assert_equal 0, stats[:resolved]
+    assert_equal 1, stats[:pending]
+    assert_equal 0, stats[:completion_percentage]
+  end
+
+  test "monthly_stats handles no goals in the month safely" do
+    reference_date = Date.current.beginning_of_month + 2.days
+
+    stats = DailyGoal.monthly_stats(reference_date: reference_date)
+
+    assert_equal 0, stats[:total]
+    assert_equal 0, stats[:resolved]
+    assert_equal 0, stats[:completion_percentage]
   end
 end
