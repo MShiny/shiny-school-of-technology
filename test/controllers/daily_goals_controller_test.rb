@@ -173,6 +173,47 @@ class DailyGoalsControllerTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
+  # --- recurrence: three-layer population via the show action ---
+
+  test "visiting a future Monday for the first time creates it from daily and Monday defaults only" do
+    DefaultGoalItem.create!(text: "Study", position: 1, daily: true)
+    DefaultGoalItem.create!(text: "DSA", position: 2, daily: false, weekdays: [ 1 ])
+    DefaultGoalItem.create!(text: "Personal project", position: 3, daily: false, weekdays: [ 6 ])
+
+    future_monday = Date.new(2026, 8, 31)
+
+    get "/daily_goals/#{future_monday.iso8601}"
+
+    assert_response :success
+    assert_match "Study", response.body
+    assert_match "DSA", response.body
+    assert_no_match(/Personal project/, response.body)
+  end
+
+  test "recurring defaults alone do not mark an uncreated future date as planned on the calendar" do
+    DefaultGoalItem.create!(text: "Study", position: 1, daily: true)
+    DefaultGoalItem.create!(text: "DSA", position: 2, daily: false, weekdays: [ 1 ])
+
+    get daily_goals_url(month: "2026-08")
+
+    assert_response :success
+    assert_no_match(/calendar-day--planned/, response.body)
+  end
+
+  test "clicking a future Monday and adding a date-specific item makes it Planned on the calendar" do
+    DefaultGoalItem.create!(text: "Study", position: 1, daily: true)
+    future_monday = Date.new(2026, 8, 31)
+
+    get "/daily_goals/#{future_monday.iso8601}"
+    goal = DailyGoal.find_by(date: future_monday)
+    goal.daily_goal_items.create!(text: "Finish ML assignment", position: 2)
+
+    get daily_goals_url(month: "2026-08")
+
+    assert_response :success
+    assert_match "calendar-day--planned", response.body
+  end
+
   # --- update ---
 
   test "update allows editing notes" do

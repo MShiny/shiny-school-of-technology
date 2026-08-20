@@ -31,10 +31,14 @@ class DailyGoal < ApplicationRecord
     find_by!(date: date)
   end
 
+  # Populates a newly created date's checklist from whichever active
+  # defaults apply to that date's weekday (daily items apply to every date;
+  # weekday-scoped items only to a matching weekday) -- recurrence rules are
+  # evaluated once, at creation time, never re-applied afterward.
   def self.create_with_default_items!(date)
     transaction do
       goal = create!(date: date)
-      DefaultGoalItem.active.ordered.each do |default_item|
+      DefaultGoalItem.active.ordered.select { |default_item| default_item.applies_on?(date) }.each do |default_item|
         goal.daily_goal_items.create!(text: default_item.text, position: default_item.position)
       end
       goal

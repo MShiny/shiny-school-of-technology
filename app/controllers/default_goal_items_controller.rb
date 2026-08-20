@@ -49,6 +49,6 @@ class DefaultGoalItemsController < ApplicationController
   end
 
   def default_goal_item_params
-    params.require(:default_goal_item).permit(:text, :position, :active)
+    params.require(:default_goal_item).permit(:text, :position, :active, :daily, weekdays: [])
   end
 end

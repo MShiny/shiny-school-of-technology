@@ -21,6 +21,24 @@
     </div>
   </div>
 
+  <div class="form-section">
+    <p class="form-section-title mb-2">Repeat</p>
+    <div class="form-check mb-2">
+      <%= form.check_box :daily, class: "form-check-input" %>
+      <%= form.label :daily, "Every day", class: "form-check-label" %>
+    </div>
+    <div class="weekday-picker">
+      <%= hidden_field_tag "default_goal_item[weekdays][]", "" %>
+      <% DefaultGoalItem::WEEKDAY_OPTIONS.each do |value, label| %>
+        <label class="weekday-chip">
+          <%= check_box_tag "default_goal_item[weekdays][]", value, default_goal_item.weekdays.include?(value), class: "weekday-chip-input" %>
+          <%= label %>
+        </label>
+      <% end %>
+    </div>
+    <div class="form-text">Choose "Every day", or pick one or more weekdays instead.</div>
+  </div>
+
   <div class="d-flex gap-2 mt-4">
     <%= form.submit class: "btn btn-primary" %>
     <%= link_to "Cancel", default_goal_items_path, class: "btn btn-outline-secondary" %>

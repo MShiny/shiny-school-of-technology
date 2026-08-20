@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_08_19_081648) do
+ActiveRecord::Schema[8.0].define(version: 2026_08_20_165802) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -56,6 +56,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_19_081648) do
     t.boolean "active", default: true, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "daily", default: true, null: false
+    t.integer "weekdays", default: [], null: false, array: true
     t.index ["active", "position"], name: "index_default_goal_items_on_active_and_position"
   end
 

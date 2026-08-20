@@ -18,6 +18,22 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     assert_equal [ "Practice today." ], goal.daily_goal_items.map(&:text)
   end
 
+  test "today's checklist is generated from daily defaults plus today's matching weekday defaults only" do
+    today_wday = Date.current.wday
+    other_wday = (today_wday + 1) % 7
+
+    DefaultGoalItem.create!(text: "Daily study", position: 1, daily: true)
+    DefaultGoalItem.create!(text: "Todays weekday item", position: 2, daily: false, weekdays: [ today_wday ])
+    DefaultGoalItem.create!(text: "Unrelated weekday item", position: 3, daily: false, weekdays: [ other_wday ])
+
+    get root_url
+
+    goal = DailyGoal.find_by(date: Date.current)
+    assert_equal [ "Daily study", "Todays weekday item" ], goal.daily_goal_items.map(&:text)
+    assert_match "Todays weekday item", response.body
+    assert_no_match(/Unrelated weekday item/, response.body)
+  end
+
   test "visiting the dashboard again does not create a second goal for today" do
     get root_url
 

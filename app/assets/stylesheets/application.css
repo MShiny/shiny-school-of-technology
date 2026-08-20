@@ -871,6 +871,42 @@ a {
 }
 
 /* -------------------------------------------------------------------- */
+/* Default goal item recurrence                                         */
+/* -------------------------------------------------------------------- */
+
+.weekday-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.weekday-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.65rem;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  user-select: none;
+  transition: border-color 0.12s ease, color 0.12s ease, background 0.12s ease;
+}
+
+.weekday-chip:has(.weekday-chip-input:checked) {
+  background: var(--color-accent-soft);
+  border-color: rgba(var(--color-accent-rgb), 0.4);
+  color: var(--color-accent);
+}
+
+.weekday-chip-input {
+  margin: 0;
+}
+
+/* -------------------------------------------------------------------- */
 /* Forms                                                                 */
 /* -------------------------------------------------------------------- */
 

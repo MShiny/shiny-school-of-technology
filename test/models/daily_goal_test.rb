@@ -139,6 +139,117 @@ class DailyGoalTest < ActiveSupport::TestCase
     assert_equal 1, DefaultGoalItem.count
   end
 
+  # --- recurrence: three-layer checklist population ---
+
+  test "creating a Monday daily goal includes daily defaults plus matching weekday defaults" do
+    DefaultGoalItem.create!(text: "Study", position: 1, daily: true)
+    DefaultGoalItem.create!(text: "Python", position: 2, daily: true)
+    DefaultGoalItem.create!(text: "DSA", position: 3, daily: false, weekdays: [ 1 ])
+    DefaultGoalItem.create!(text: "ML Review", position: 4, daily: false, weekdays: [ 1 ])
+
+    monday = Date.new(2026, 8, 24)
+    goal = DailyGoal.find_or_create_for_date!(monday)
+
+    assert_equal [ "Study", "Python", "DSA", "ML Review" ], goal.daily_goal_items.ordered.map(&:text)
+  end
+
+  test "creating a Tuesday daily goal excludes Monday-only defaults" do
+    DefaultGoalItem.create!(text: "Study", position: 1, daily: true)
+    DefaultGoalItem.create!(text: "Python", position: 2, daily: true)
+    DefaultGoalItem.create!(text: "DSA", position: 3, daily: false, weekdays: [ 1 ])
+    DefaultGoalItem.create!(text: "ML Review", position: 4, daily: false, weekdays: [ 1 ])
+
+    tuesday = Date.new(2026, 8, 25)
+    goal = DailyGoal.find_or_create_for_date!(tuesday)
+
+    assert_equal [ "Study", "Python" ], goal.daily_goal_items.ordered.map(&:text)
+  end
+
+  test "generated checklist preserves DefaultGoalItem position ordering across daily and weekday items" do
+    DefaultGoalItem.create!(text: "Daily A", position: 1, daily: true)
+    DefaultGoalItem.create!(text: "Monday item", position: 2, daily: false, weekdays: [ 1 ])
+    DefaultGoalItem.create!(text: "Daily B", position: 3, daily: true)
+
+    monday = Date.new(2026, 8, 24)
+    goal = DailyGoal.find_or_create_for_date!(monday)
+
+    assert_equal [ "Daily A", "Monday item", "Daily B" ], goal.daily_goal_items.ordered.map(&:text)
+  end
+
+  test "a manually added date-specific item stays on only that date" do
+    DefaultGoalItem.create!(text: "Study", position: 1, daily: true)
+    DefaultGoalItem.create!(text: "DSA", position: 2, daily: false, weekdays: [ 1 ])
+
+    monday = Date.new(2026, 8, 24)
+    goal = DailyGoal.find_or_create_for_date!(monday)
+    goal.daily_goal_items.create!(text: "Finish ML Week 3", position: 3)
+
+    assert_equal 3, goal.daily_goal_items.count
+    assert_includes goal.daily_goal_items.map(&:text), "Finish ML Week 3"
+
+    tuesday = DailyGoal.find_or_create_for_date!(Date.new(2026, 8, 25))
+    assert_not_includes tuesday.daily_goal_items.map(&:text), "Finish ML Week 3"
+
+    next_monday = DailyGoal.find_or_create_for_date!(Date.new(2026, 8, 31))
+    assert_not_includes next_monday.daily_goal_items.map(&:text), "Finish ML Week 3"
+  end
+
+  test "changing a daily default afterward does not alter an already-created daily goal" do
+    daily_default = DefaultGoalItem.create!(text: "Study", position: 1, daily: true)
+    goal = DailyGoal.find_or_create_for_date!(Date.new(2026, 8, 24))
+
+    daily_default.update!(text: "Something totally different")
+
+    assert_equal [ "Study" ], goal.reload.daily_goal_items.map(&:text)
+  end
+
+  test "changing a Monday default afterward does not alter an already-created Monday daily goal" do
+    DefaultGoalItem.create!(text: "Study", position: 1, daily: true)
+    monday_default = DefaultGoalItem.create!(text: "DSA", position: 2, daily: false, weekdays: [ 1 ])
+    goal = DailyGoal.find_or_create_for_date!(Date.new(2026, 8, 24))
+
+    monday_default.update!(text: "Something else")
+
+    assert_equal [ "Study", "DSA" ], goal.reload.daily_goal_items.map(&:text)
+  end
+
+  test "adding a new Monday recurring item later does not alter an already-created Monday" do
+    DefaultGoalItem.create!(text: "Study", position: 1, daily: true)
+    goal = DailyGoal.find_or_create_for_date!(Date.new(2026, 8, 24))
+
+    DefaultGoalItem.create!(text: "Mathematics", position: 2, daily: false, weekdays: [ 1 ])
+
+    assert_equal [ "Study" ], goal.reload.daily_goal_items.map(&:text)
+  end
+
+  test "deactivating a recurring default later does not remove it from an already-created daily goal" do
+    DefaultGoalItem.create!(text: "Study", position: 1, daily: true)
+    dsa = DefaultGoalItem.create!(text: "DSA", position: 2, daily: false, weekdays: [ 1 ])
+    goal = DailyGoal.find_or_create_for_date!(Date.new(2026, 8, 24))
+
+    dsa.update!(active: false)
+
+    assert_equal [ "Study", "DSA" ], goal.reload.daily_goal_items.map(&:text)
+  end
+
+  test "a newly-created later Monday uses the latest recurrence configuration" do
+    DefaultGoalItem.create!(text: "Study", position: 1, daily: true)
+    first_monday = DailyGoal.find_or_create_for_date!(Date.new(2026, 8, 24))
+
+    DefaultGoalItem.create!(text: "Mathematics", position: 2, daily: false, weekdays: [ 1 ])
+    second_monday = DailyGoal.find_or_create_for_date!(Date.new(2026, 8, 31))
+
+    assert_equal [ "Study" ], first_monday.reload.daily_goal_items.map(&:text)
+    assert_equal [ "Study", "Mathematics" ], second_monday.daily_goal_items.map(&:text)
+  end
+
+  test "recurring defaults alone do not create a DailyGoal for a future date" do
+    DefaultGoalItem.create!(text: "Study", position: 1, daily: true)
+    DefaultGoalItem.create!(text: "DSA", position: 2, daily: false, weekdays: [ 1 ])
+
+    assert_nil DailyGoal.find_by(date: Date.new(2026, 8, 31))
+  end
+
   # --- status derivation ---
 
   test "status is met when every item is completed" do
