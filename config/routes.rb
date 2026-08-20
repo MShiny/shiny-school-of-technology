@@ -16,7 +16,11 @@ Rails.application.routes.draw do
   resources :courses
   resources :personal_projects
 
-  resources :daily_goals, only: [ :index, :show, :edit, :update ]
+  resources :daily_goals, only: [ :index, :show, :edit, :update ] do
+    collection do
+      get :history
+    end
+  end
 
   resources :daily_goal_items, only: [ :create, :update, :destroy ] do
     member do

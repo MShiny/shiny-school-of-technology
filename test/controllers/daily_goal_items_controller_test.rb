@@ -50,38 +50,77 @@ class DailyGoalItemsControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
-  test "create is rejected for a historical daily goal" do
+  # --- historical dates are now editable too (V1.6) ---
+
+  test "create adds an item to a historical daily goal" do
     historical = DailyGoal.create!(date: Date.current - 1.day)
 
-    assert_no_difference("DailyGoalItem.count") do
-      post daily_goal_items_url, params: { daily_goal_item: { daily_goal_id: historical.id, text: "Too late" } }
+    assert_difference("DailyGoalItem.count", 1) do
+      post daily_goal_items_url, params: { daily_goal_item: { daily_goal_id: historical.id, text: "Retroactive item" } }
     end
   end
 
-  test "update is rejected for a historical daily goal's item" do
+  test "update edits a historical daily goal's item" do
     historical = DailyGoal.create!(date: Date.current - 1.day)
     historical_item = historical.daily_goal_items.create!(text: "Old item", position: 1)
 
     patch daily_goal_item_url(historical_item), params: { daily_goal_item: { text: "Rewritten" } }
 
-    assert_equal "Old item", historical_item.reload.text
+    assert_equal "Rewritten", historical_item.reload.text
   end
 
-  test "toggle is rejected for a historical daily goal's item" do
+  test "toggle marks a historical daily goal's item completed" do
     historical = DailyGoal.create!(date: Date.current - 1.day)
     historical_item = historical.daily_goal_items.create!(text: "Old item", position: 1, completed: false)
 
     patch toggle_daily_goal_item_url(historical_item)
 
-    assert_not historical_item.reload.completed?
+    assert historical_item.reload.completed?
   end
 
-  test "destroy is rejected for a historical daily goal's item" do
+  test "destroy removes a historical daily goal's item" do
     historical = DailyGoal.create!(date: Date.current - 1.day)
     historical_item = historical.daily_goal_items.create!(text: "Old item", position: 1)
 
-    assert_no_difference("DailyGoalItem.count") do
+    assert_difference("DailyGoalItem.count", -1) do
       delete daily_goal_item_url(historical_item)
+    end
+  end
+
+  # --- future dates are fully editable too ---
+
+  test "create adds an item to a future daily goal" do
+    future = DailyGoal.create!(date: Date.current + 3.days)
+
+    assert_difference("DailyGoalItem.count", 1) do
+      post daily_goal_items_url, params: { daily_goal_item: { daily_goal_id: future.id, text: "Plan ahead" } }
+    end
+  end
+
+  test "update edits a future daily goal's item" do
+    future = DailyGoal.create!(date: Date.current + 3.days)
+    future_item = future.daily_goal_items.create!(text: "Draft plan", position: 1)
+
+    patch daily_goal_item_url(future_item), params: { daily_goal_item: { text: "Python" } }
+
+    assert_equal "Python", future_item.reload.text
+  end
+
+  test "toggle marks a future daily goal's item completed" do
+    future = DailyGoal.create!(date: Date.current + 3.days)
+    future_item = future.daily_goal_items.create!(text: "Draft plan", position: 1)
+
+    patch toggle_daily_goal_item_url(future_item)
+
+    assert future_item.reload.completed?
+  end
+
+  test "destroy removes a future daily goal's item" do
+    future = DailyGoal.create!(date: Date.current + 3.days)
+    future_item = future.daily_goal_items.create!(text: "Draft plan", position: 1)
+
+    assert_difference("DailyGoalItem.count", -1) do
+      delete daily_goal_item_url(future_item)
     end
   end
 end

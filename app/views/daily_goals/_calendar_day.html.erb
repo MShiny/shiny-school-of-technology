@@ -1,0 +1,19 @@
+<%
+date = day[:date]
+goal = day[:goal]
+is_today = date == Date.current
+classes = [ "calendar-day", calendar_day_class(goal) ]
+classes << "is-today" if is_today
+classes << "is-outside" unless day[:in_month]
+%>
+<%= link_to daily_goal_path(date.iso8601), class: classes.compact.join(" ") do %>
+  <span class="calendar-day-number"><%= date.day %></span>
+  <% if goal %>
+    <% if goal.status == "planned" %>
+      <span class="calendar-day-meta">Planned</span>
+      <span class="calendar-day-count"><%= pluralize(goal.items_total, "item") %></span>
+    <% else %>
+      <span class="calendar-day-count"><%= goal.items_completed_count %> / <%= goal.items_total %></span>
+    <% end %>
+  <% end %>
+<% end %>

@@ -6,28 +6,103 @@ class DailyGoalsControllerTest < ActionDispatch::IntegrationTest
     @goal.daily_goal_items.create!(text: "Study today", position: 1)
   end
 
-  test "index lists daily goals newest first" do
+  # --- calendar (index) ---
+
+  test "index renders the current month's calendar by default" do
+    get daily_goals_url
+
+    assert_response :success
+    assert_match Date.current.strftime("%B %Y"), response.body
+    assert_match Date.current.day.to_s, response.body
+  end
+
+  test "index renders a specific month via the month param" do
+    get daily_goals_url(month: "2026-03")
+
+    assert_response :success
+    assert_match "March 2026", response.body
+  end
+
+  test "index falls back to the current month for an invalid month param" do
+    get daily_goals_url(month: "not-a-month")
+
+    assert_response :success
+    assert_match Date.current.strftime("%B %Y"), response.body
+  end
+
+  test "index navigation links point to the previous and next month" do
+    get daily_goals_url(month: "2026-03")
+
+    assert_response :success
+    assert_select "a[href=?]", daily_goals_path(month: "2026-02")
+    assert_select "a[href=?]", daily_goals_path(month: "2026-04")
+  end
+
+  test "index handles the December to January year boundary" do
+    get daily_goals_url(month: "2026-12")
+
+    assert_response :success
+    assert_select "a[href=?]", daily_goals_path(month: "2027-01")
+    assert_select "a[href=?]", daily_goals_path(month: "2026-11")
+  end
+
+  test "index handles the January to December year boundary" do
+    get daily_goals_url(month: "2027-01")
+
+    assert_response :success
+    assert_select "a[href=?]", daily_goals_path(month: "2026-12")
+    assert_select "a[href=?]", daily_goals_path(month: "2027-02")
+  end
+
+  test "index links each date cell to its date-based show page" do
+    get daily_goals_url(month: Date.current.strftime("%Y-%m"))
+
+    assert_response :success
+    assert_select "a[href=?]", daily_goal_path(Date.current.iso8601)
+  end
+
+  test "index does not create daily goals just by rendering the calendar" do
+    assert_no_difference("DailyGoal.count") do
+      get daily_goals_url
+    end
+  end
+
+  # --- history (secondary list view) ---
+
+  test "history lists daily goals newest first" do
     older = DailyGoal.create!(date: Date.current - 1.day)
     older.daily_goal_items.create!(text: "Study yesterday", position: 1, completed: true)
 
-    get daily_goals_url
+    get history_daily_goals_url
 
     assert_response :success
     assert_equal [ @goal, older ], DailyGoal.recent.to_a
   end
 
-  test "index shows completed / total item counts for each day" do
+  test "history shows completed / total item counts for each day" do
     @goal.daily_goal_items.first.update!(completed: true)
     @goal.daily_goal_items.create!(text: "Second item", position: 2, completed: false)
 
-    get daily_goals_url
+    get history_daily_goals_url
 
     assert_response :success
     assert_match "1 / 2 completed", response.body
   end
 
-  test "show displays the checklist for that day" do
-    get daily_goal_url(@goal)
+  test "history does not include future planned dates" do
+    future = DailyGoal.create!(date: Date.current + 3.days)
+    future.daily_goal_items.create!(text: "Future item", position: 1)
+
+    get history_daily_goals_url
+
+    assert_response :success
+    assert_no_match(/Future item/, response.body)
+  end
+
+  # --- show ---
+
+  test "show displays the checklist for that day using a date-based URL" do
+    get "/daily_goals/#{@goal.date.iso8601}"
 
     assert_response :success
     assert_match "Study today", response.body
@@ -40,7 +115,7 @@ class DailyGoalsControllerTest < ActionDispatch::IntegrationTest
     assert_select "form[action=?]", daily_goal_items_path
   end
 
-  test "show renders a historical checklist as read-only" do
+  test "show renders a historical checklist as editable too" do
     historical = DailyGoal.create!(date: Date.current - 2.days)
     historical.daily_goal_items.create!(text: "Old item", position: 1, completed: true)
 
@@ -48,12 +123,70 @@ class DailyGoalsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_match "Old item", response.body
-    assert_select "form[action=?]", daily_goal_items_path, count: 0
+    assert_select "form[action=?]", daily_goal_items_path
   end
+
+  test "show creates a future daily goal on demand when visited for the first time" do
+    DefaultGoalItem.create!(text: "Study Python", position: 1, active: true)
+    future_date = Date.current + 4.days
+
+    assert_difference("DailyGoal.count", 1) do
+      get "/daily_goals/#{future_date.iso8601}"
+    end
+
+    assert_response :success
+    goal = DailyGoal.find_by(date: future_date)
+    assert_equal [ "Study Python" ], goal.daily_goal_items.map(&:text)
+  end
+
+  test "show creates a past daily goal on demand when visited for the first time" do
+    DefaultGoalItem.create!(text: "Study Python", position: 1, active: true)
+    past_date = Date.current - 15.days
+
+    assert_difference("DailyGoal.count", 1) do
+      get "/daily_goals/#{past_date.iso8601}"
+    end
+
+    assert_response :success
+  end
+
+  test "show does not duplicate an existing future daily goal on repeat visits" do
+    future_date = Date.current + 4.days
+    get "/daily_goals/#{future_date.iso8601}"
+
+    assert_no_difference("DailyGoal.count") do
+      get "/daily_goals/#{future_date.iso8601}"
+    end
+  end
+
+  test "show displays a future daily goal as Planned" do
+    future_date = Date.current + 2.days
+    get "/daily_goals/#{future_date.iso8601}"
+
+    assert_response :success
+    assert_match "Planned", response.body
+  end
+
+  test "show returns not found for a malformed date" do
+    get "/daily_goals/not-a-date"
+
+    assert_response :not_found
+  end
+
+  # --- update ---
 
   test "update allows editing notes" do
     patch daily_goal_url(@goal), params: { daily_goal: { notes: "Some notes" } }
 
     assert_equal "Some notes", @goal.reload.notes
+  end
+
+  test "update allows editing notes on a future daily goal" do
+    future_date = Date.current + 3.days
+    get "/daily_goals/#{future_date.iso8601}"
+
+    patch "/daily_goals/#{future_date.iso8601}", params: { daily_goal: { notes: "Plan ahead" } }
+
+    assert_equal "Plan ahead", DailyGoal.find_by(date: future_date).notes
   end
 end

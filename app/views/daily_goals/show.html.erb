@@ -1,8 +1,11 @@
+<%
+temporal_label = @daily_goal.future? ? "Future Plan" : (@daily_goal.today? ? "Today" : "Past Entry")
+%>
 <% content_for :title, "Daily Goal - #{@daily_goal.date.strftime('%b %-d, %Y')}" %>
 
 <div class="page-header">
   <div>
-    <p class="page-eyebrow">Journal Entry</p>
+    <p class="page-eyebrow"><%= temporal_label %></p>
     <h1 class="h2 mb-2"><%= @daily_goal.date.strftime("%A, %B %-d, %Y") %></h1>
     <%= status_badge(@daily_goal.status) %>
   </div>
@@ -11,9 +14,16 @@
   <% end %>
 </div>
 
+<% if @daily_goal.future? %>
+  <div class="alert alert-light border d-flex align-items-center gap-2 mb-3">
+    <i class="bi bi-calendar-event text-muted"></i>
+    <span class="small text-muted">This is a plan for a future date &mdash; check items off as you like, but it won't count toward your stats until the day arrives.</span>
+  </div>
+<% end %>
+
 <div class="card">
   <div class="card-body">
-    <%= render "daily_goal_items/checklist", daily_goal: @daily_goal, editable: @daily_goal.date == Date.current %>
+    <%= render "daily_goal_items/checklist", daily_goal: @daily_goal, editable: true %>
   </div>
 </div>
 
@@ -25,6 +35,6 @@
 
 <p class="mt-4">
   <%= link_to daily_goals_path, class: "btn btn-link ps-0" do %>
-    <i class="bi bi-arrow-left me-1"></i>Back to Daily Goals
+    <i class="bi bi-arrow-left me-1"></i>Back to Calendar
   <% end %>
 </p>

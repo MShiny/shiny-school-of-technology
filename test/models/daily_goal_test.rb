@@ -56,6 +56,66 @@ class DailyGoalTest < ActiveSupport::TestCase
     assert_equal [ "Custom item" ], found.daily_goal_items.map(&:text)
   end
 
+  test "find_or_create_for_date! creates a future date's checklist from active defaults" do
+    DefaultGoalItem.create!(text: "Study Python", position: 1, active: true)
+    DefaultGoalItem.create!(text: "Practice DSA", position: 2, active: true)
+
+    future_date = Date.current + 5.days
+    goal = DailyGoal.find_or_create_for_date!(future_date)
+
+    assert_equal future_date, goal.date
+    assert_equal [ "Study Python", "Practice DSA" ], goal.daily_goal_items.ordered.map(&:text)
+  end
+
+  test "find_or_create_for_date! creates a past date's checklist on demand without backfilling every day" do
+    DefaultGoalItem.create!(text: "Study Python", position: 1, active: true)
+
+    past_date = Date.current - 10.days
+    assert_nil DailyGoal.find_by(date: past_date)
+
+    goal = DailyGoal.find_or_create_for_date!(past_date)
+
+    assert_equal past_date, goal.date
+    assert_equal [ "Study Python" ], goal.daily_goal_items.map(&:text)
+    assert_equal 1, DailyGoal.count
+  end
+
+  test "find_or_create_for_date! does not duplicate or reset an existing goal for that date" do
+    future_date = Date.current + 2.days
+    existing = DailyGoal.create!(date: future_date)
+    existing.daily_goal_items.create!(text: "Custom future item", position: 1)
+
+    found = DailyGoal.find_or_create_for_date!(future_date)
+
+    assert_equal existing.id, found.id
+    assert_equal [ "Custom future item" ], found.daily_goal_items.map(&:text)
+  end
+
+  test "a future date's saved plan is an independent snapshot from later default changes" do
+    DefaultGoalItem.create!(text: "Original default", position: 1)
+    future_date = Date.current + 4.days
+    goal = DailyGoal.find_or_create_for_date!(future_date)
+
+    DefaultGoalItem.first.update!(text: "Edited default text")
+    DefaultGoalItem.create!(text: "A brand new default", position: 2)
+
+    goal.reload
+    assert_equal [ "Original default" ], goal.daily_goal_items.map(&:text)
+  end
+
+  test "customizing a future date's checklist does not affect another date" do
+    tomorrow = DailyGoal.find_or_create_for_date!(Date.current + 1.day)
+    day_after = DailyGoal.find_or_create_for_date!(Date.current + 2.days)
+
+    tomorrow.daily_goal_items.create!(text: "Python", position: 1)
+    tomorrow.daily_goal_items.create!(text: "Machine Learning", position: 2)
+
+    day_after.daily_goal_items.create!(text: "Generative AI", position: 1)
+
+    assert_equal [ "Python", "Machine Learning" ], tomorrow.reload.daily_goal_items.ordered.map(&:text)
+    assert_equal [ "Generative AI" ], day_after.reload.daily_goal_items.ordered.map(&:text)
+  end
+
   test "snapshot is independent: changing defaults later does not alter an existing day's checklist" do
     DefaultGoalItem.create!(text: "Original default", position: 1)
     goal = DailyGoal.find_or_create_today!
@@ -133,6 +193,45 @@ class DailyGoalTest < ActiveSupport::TestCase
     assert_equal "partial", goal.status
   end
 
+  test "status is planned for a future date regardless of completion" do
+    goal = DailyGoal.create!(date: Date.current + 3.days)
+    goal.daily_goal_items.create!(text: "A", position: 1, completed: false)
+
+    assert_equal "planned", goal.status
+  end
+
+  test "status is planned for a future date even when every item is completed" do
+    goal = DailyGoal.create!(date: Date.current + 1.day)
+    goal.daily_goal_items.create!(text: "A", position: 1, completed: true)
+
+    assert_equal "planned", goal.status
+    assert goal.fully_completed?
+  end
+
+  test "status is planned for a future date with no items at all" do
+    goal = DailyGoal.create!(date: Date.current + 1.day)
+
+    assert_equal "planned", goal.status
+  end
+
+  test "future?, today?, and historical? correctly classify dates" do
+    future = DailyGoal.create!(date: Date.current + 1.day)
+    today = DailyGoal.create!(date: Date.current)
+    past = DailyGoal.create!(date: Date.current - 1.day)
+
+    assert future.future?
+    assert_not future.historical?
+    assert_not future.today?
+
+    assert today.today?
+    assert_not today.future?
+    assert_not today.historical?
+
+    assert past.historical?
+    assert_not past.future?
+    assert_not past.today?
+  end
+
   test "items_total and items_completed_count reflect the checklist" do
     goal = DailyGoal.create!(date: Date.current)
     goal.daily_goal_items.create!(text: "A", position: 1, completed: true)
@@ -141,6 +240,17 @@ class DailyGoalTest < ActiveSupport::TestCase
 
     assert_equal 3, goal.items_total
     assert_equal 2, goal.items_completed_count
+  end
+
+  # --- recent scope ---
+
+  test "recent excludes future dates and orders past/today newest first" do
+    future = DailyGoal.create!(date: Date.current + 2.days)
+    today = DailyGoal.create!(date: Date.current)
+    yesterday = DailyGoal.create!(date: Date.current - 1.day)
+
+    assert_equal [ today, yesterday ], DailyGoal.recent.to_a
+    assert_not_includes DailyGoal.recent.to_a, future
   end
 
   # --- current_streak ---
@@ -202,6 +312,17 @@ class DailyGoalTest < ActiveSupport::TestCase
     end
 
     assert_equal 2, DailyGoal.current_streak(as_of: today)
+  end
+
+  test "a fully-completed future plan does not inflate the current streak" do
+    today = Date.current
+    goal = DailyGoal.create!(date: today)
+    goal.daily_goal_items.create!(text: "Study", position: 1, completed: true)
+
+    future = DailyGoal.create!(date: today + 1.day)
+    future.daily_goal_items.create!(text: "Study ahead", position: 1, completed: true)
+
+    assert_equal 1, DailyGoal.current_streak(as_of: today)
   end
 
   test "a historical not_met day breaks the streak going forward from it" do
@@ -294,6 +415,26 @@ class DailyGoalTest < ActiveSupport::TestCase
       assert_equal 0, stats[:total_items]
       assert_equal 0, stats[:completed_items]
       assert_equal 0, stats[:item_completion_percentage]
+    end
+  end
+
+  test "monthly_stats excludes future dates within the same month from all calculations" do
+    travel_to Date.new(2026, 6, 5) do
+      met = DailyGoal.create!(date: Date.current - 1.day)
+      met.daily_goal_items.create!(text: "A", position: 1, completed: true)
+
+      future_planned = DailyGoal.create!(date: Date.current + 5.days)
+      future_planned.daily_goal_items.create!(text: "B", position: 1, completed: true)
+      future_planned.daily_goal_items.create!(text: "C", position: 2, completed: true)
+
+      stats = DailyGoal.monthly_stats(reference_date: Date.current)
+
+      assert_equal 1, stats[:met]
+      assert_equal 1, stats[:total]
+      assert_equal 1, stats[:resolved]
+      assert_equal 100, stats[:completion_percentage]
+      assert_equal 1, stats[:total_items]
+      assert_equal 1, stats[:completed_items]
     end
   end
 

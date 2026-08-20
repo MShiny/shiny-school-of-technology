@@ -45,7 +45,7 @@ percentage = total.zero? ? 0 : ((completed.to_f / total) * 100).round
   <% if editable %>
     <%= form_with url: daily_goal_items_path, method: :post, class: "checklist-add-form" do %>
       <%= hidden_field_tag "daily_goal_item[daily_goal_id]", daily_goal.id %>
-      <%= text_field_tag "daily_goal_item[text]", nil, class: "form-control form-control-sm", placeholder: "Add an item for today...", required: true %>
+      <%= text_field_tag "daily_goal_item[text]", nil, class: "form-control form-control-sm", placeholder: "Add an item...", required: true %>
       <%= submit_tag "Add", class: "btn btn-sm btn-primary flex-shrink-0" %>
     <% end %>
   <% end %>

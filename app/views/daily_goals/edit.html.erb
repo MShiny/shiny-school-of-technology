@@ -2,7 +2,7 @@
 
 <div class="page-header">
   <div>
-    <p class="page-eyebrow">Journal Entry</p>
+    <p class="page-eyebrow"><%= @daily_goal.future? ? "Future Plan" : "Journal Entry" %></p>
     <h1 class="h2 mb-1">Edit Daily Goal Notes</h1>
     <p class="text-muted mb-0"><%= @daily_goal.date.strftime("%A, %B %-d, %Y") %></p>
   </div>
@@ -15,7 +15,7 @@
     <div>
       <%= form.label :notes, class: "form-label" %>
       <%= form.text_area :notes, class: "form-control", rows: 3 %>
-      <div class="form-text">Checklist items can be edited directly from today's checklist.</div>
+      <div class="form-text">Checklist items can be edited directly from the day's checklist.</div>
     </div>
   </div>
 

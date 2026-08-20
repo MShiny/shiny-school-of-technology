@@ -1,7 +1,6 @@
 class DailyGoalItemsController < ApplicationController
   before_action :set_daily_goal_item, only: %i[ update destroy toggle ]
   before_action :set_daily_goal_for_create, only: %i[ create ]
-  before_action :ensure_today!, only: %i[ create update destroy toggle ]
 
   def create
     item = @daily_goal.daily_goal_items.build(item_params)
@@ -41,15 +40,6 @@ class DailyGoalItemsController < ApplicationController
 
   def set_daily_goal_for_create
     @daily_goal = DailyGoal.find(params.require(:daily_goal_item)[:daily_goal_id])
-  end
-
-  # Today's checklist is the only one that can be customized. Historical
-  # checklists are kept as an accurate snapshot of what actually happened.
-  def ensure_today!
-    goal = @daily_goal || @daily_goal_item.daily_goal
-    return if goal.date == Date.current
-
-    redirect_back fallback_location: daily_goal_path(goal), alert: "Only today's checklist can be edited."
   end
 
   def item_params

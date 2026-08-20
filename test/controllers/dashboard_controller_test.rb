@@ -75,4 +75,31 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
 
     assert_match "No active projects right now", response.body
   end
+
+  test "dashboard recent activity excludes future planned daily goals" do
+    future = DailyGoal.create!(date: Date.current + 3.days)
+    future.daily_goal_items.create!(text: "Future item text", position: 1)
+
+    get root_url
+
+    assert_response :success
+    assert_no_match(/Future item text/, response.body)
+  end
+
+  test "dashboard streak and monthly stats are unaffected by a fully-completed future plan" do
+    goal = DailyGoal.find_or_create_today!
+    goal.daily_goal_items.create!(text: "Study ML", position: 1, completed: true)
+
+    future = DailyGoal.create!(date: Date.current + 2.days)
+    future.daily_goal_items.create!(text: "Future item", position: 1, completed: true)
+
+    stats_without_future = DailyGoal.monthly_stats
+    assert_equal 1, stats_without_future[:total_items]
+    assert_equal 1, stats_without_future[:completed_items]
+
+    get root_url
+
+    assert_response :success
+    assert_match "1 / 1", response.body
+  end
 end

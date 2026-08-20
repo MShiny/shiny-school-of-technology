@@ -2,38 +2,42 @@
 
 <div class="page-header">
   <div>
-    <p class="page-eyebrow">Journal</p>
-    <h1 class="h2">Daily Goals</h1>
-    <p class="text-muted mb-0">A running log of what you set out to do, and what actually got done.</p>
+    <p class="page-eyebrow">Planner</p>
+    <h1 class="h2"><%= @month.strftime("%B %Y") %></h1>
+    <p class="text-muted mb-0">Plan ahead, check in today, and look back at what got done.</p>
   </div>
+  <%= link_to history_daily_goals_path, class: "btn btn-outline-secondary btn-sm" do %>
+    <i class="bi bi-list-ul me-1"></i>History
+  <% end %>
 </div>
 
-<% if @daily_goals.any? %>
-  <div class="vstack gap-2">
-    <% @daily_goals.each do |goal| %>
-      <%
-        percentage = goal.items_total.zero? ? 0 : ((goal.items_completed_count.to_f / goal.items_total) * 100).round
-      %>
-      <%= link_to daily_goal_path(goal), class: "journal-row text-decoration-none text-body" do %>
-        <span class="d-flex align-items-center gap-3 min-w-0">
-          <%= status_dot(goal.status) %>
-          <span class="journal-date"><%= goal.date.strftime("%b %-d, %Y") %></span>
-          <span class="journal-progress d-none d-sm-block">
-            <div class="progress" style="height: 6px;">
-              <div class="progress-bar bg-success" role="progressbar" style="width: <%= percentage %>%;"></div>
-            </div>
-          </span>
-        </span>
-        <span class="d-flex align-items-center gap-3 flex-shrink-0">
-          <span class="small text-muted"><%= goal.items_completed_count %> / <%= goal.items_total %> completed</span>
-          <%= status_badge(goal.status) %>
-        </span>
+<div class="calendar-nav">
+  <%= link_to daily_goals_path(month: @previous_month.strftime("%Y-%m")), class: "btn btn-outline-secondary btn-sm", aria: { label: "Previous month" } do %>
+    <i class="bi bi-chevron-left"></i> Previous
+  <% end %>
+  <%= link_to "Today", daily_goals_path, class: "btn btn-sm btn-primary" %>
+  <%= link_to daily_goals_path(month: @next_month.strftime("%Y-%m")), class: "btn btn-outline-secondary btn-sm", aria: { label: "Next month" } do %>
+    Next <i class="bi bi-chevron-right"></i>
+  <% end %>
+</div>
+
+<div class="calendar-legend">
+  <span><span class="status-dot status-success"></span> Met</span>
+  <span><span class="status-dot status-warning"></span> Partial</span>
+  <span><span class="status-dot status-danger"></span> Not met</span>
+  <span><span class="status-dot status-accent"></span> Planned</span>
+</div>
+
+<div class="calendar-scroll">
+  <div class="calendar-grid">
+    <% %w[Mon Tue Wed Thu Fri Sat Sun].each do |label| %>
+      <div class="calendar-weekday"><%= label %></div>
+    <% end %>
+
+    <% @calendar_weeks.each do |week| %>
+      <% week.each do |day| %>
+        <%= render "calendar_day", day: day %>
       <% end %>
     <% end %>
   </div>
-<% else %>
-  <div class="empty-state">
-    <i class="bi bi-journal-check empty-state-icon"></i>
-    No daily goals recorded yet.
-  </div>
-<% end %>
+</div>
